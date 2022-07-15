@@ -71,6 +71,8 @@ async fn volume_nexus_reconcile(
             if volume_state.status != VolumeStatus::Online {
                 faulted_nexus_remover(&nexus_spec, context, mode).await?;
                 missing_nexus_recreate(&nexus_spec, context, mode).await?;
+            } else {
+                let _node = nexus_spec.lock().node.clone();
             }
             fixup_nexus_protocol(&nexus_spec, context, mode).await
         }

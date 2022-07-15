@@ -1,5 +1,5 @@
 use crate::{
-    operations::{Cordoning, Get, List},
+    operations::{Cordoning, Drain, Get, List},
     resources::{
         utils,
         utils::{print_table, CreateRows, GetHeaderRow, OutputFormat},
@@ -238,6 +238,27 @@ impl GetHeaderRow for NodeDisplay {
             NodeDisplayFormat::CordonLabels => {
                 header.extend(vec!["CORDON LABELS"]);
                 header
+            }
+        }
+    }
+}
+
+#[async_trait(?Send)]
+impl Drain for Node {
+    type ID = NodeId;
+    async fn drain(id: &Self::ID, label: String, output: &utils::OutputFormat) {
+        // loop this call until the put_node_drain call returns
+        match RestClient::client()
+            .nodes_api()
+            .put_node_drain(id, &label)
+            .await
+        {
+            Ok(node) => {
+                // Print table, json or yaml based on output format.
+                utils::print_table(output, node.into_body());
+            }
+            Err(e) => {
+                println!("Failed to get node {}. Error {}", id, e)
             }
         }
     }

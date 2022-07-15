@@ -32,6 +32,20 @@ pub enum GetResources {
     /// Currently disks having blobstore pools not created by control-plane are also shown as
     /// usable.
     BlockDevices(BlockDeviceArgs),
+    /// Get all cordon labels associated with the node ID
+    CordonLabels { id: NodeId },
+}
+
+/// The types of resources that support the 'drain' operation.
+#[derive(clap::Subcommand, Debug)]
+pub enum DrainResources {
+    /// Drain node with the given ID.
+    Node {
+        /// ID of the node.
+        id: NodeId,
+        /// Label of the drain
+        label: String,
+    },
 }
 
 /// The types of resources that support the 'scale' operation.

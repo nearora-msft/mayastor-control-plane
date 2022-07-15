@@ -37,6 +37,25 @@ impl apis::actix_server::Nodes for RestApi {
         let node = client().uncordon(id.into(), label).await?;
         Ok(node.into())
     }
+
+    async fn put_node_drain(
+        Path((id, _label)): Path<(String, String)>,
+    ) -> Result<models::Node, RestError<RestJsonError>> {
+        let node = node(
+            id.clone(),
+            client()
+                .get(Filter::Node(id.into()), None)
+                .await?
+                .into_inner()
+                .get(0),
+        )?;
+        Ok(node.into())
+    }
+
+    async fn get_node_drain(Path(_id): Path<String>) -> Result<String, RestError<RestJsonError>> {
+        let label = "test";
+        Ok(label.into())
+    }
 }
 
 /// returns node from node option and returns an error on non existence

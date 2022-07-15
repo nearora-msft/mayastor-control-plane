@@ -285,6 +285,59 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - JWT: [ ]
+  '/nodes/{id}/drain/{label}':
+    put:
+      tags:
+        - Nodes
+      operationId: put_node_drain
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: label
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '4XX':
+          $ref: '#/components/responses/ClientError'
+        '5XX':
+          $ref: '#/components/responses/ServerError'
+      security:
+        - JWT: [ ]
+  '/nodes/{id}/drain':
+    get:
+      tags:
+        - Nodes
+      operationId: get_node_drain
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+        '4XX':
+          $ref: '#/components/responses/ClientError'
+        '5XX':
+          $ref: '#/components/responses/ServerError'
+      security:
+        - JWT: [ ]
   '/nodes/{id}/nexuses':
     get:
       tags:
@@ -2734,6 +2787,10 @@ components:
           $ref: '#/components/schemas/ReplicaState'
       required:
         - state
+    Label:
+      description: label for node
+      example: draining
+      type: string
   responses:
     ClientError:
       description: Client side error
