@@ -34,6 +34,8 @@ pub enum GetResources {
     BlockDevices(BlockDeviceArgs),
     /// Get all cordon labels associated with the node ID
     CordonLabels { id: NodeId },
+    /// Get all cordon labels associated with the node ID
+    DrainLabels { id: NodeId },
 }
 
 /// The types of resources that support the 'drain' operation.

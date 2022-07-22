@@ -39,16 +39,9 @@ impl apis::actix_server::Nodes for RestApi {
     }
 
     async fn put_node_drain(
-        Path((id, _label)): Path<(String, String)>,
+        Path((id, label)): Path<(String, String)>,
     ) -> Result<models::Node, RestError<RestJsonError>> {
-        let node = node(
-            id.clone(),
-            client()
-                .get(Filter::Node(id.into()), None)
-                .await?
-                .into_inner()
-                .get(0),
-        )?;
+        let node = client().drain(id.into(), label).await?;
         Ok(node.into())
     }
 

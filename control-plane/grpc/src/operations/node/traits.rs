@@ -3,7 +3,7 @@ use crate::{
     blockdevice::GetBlockDevicesRequest,
     context::Context,
     node,
-    node::{get_nodes_request, NodeCordon},
+    node::{get_nodes_request, NodeCordon, NodeDrain},
 };
 use common_lib::{
     transport_api::{
@@ -37,6 +37,8 @@ pub trait NodeOperations: Send + Sync {
     async fn cordon(&self, id: NodeId, label: String) -> Result<Node, ReplyError>;
     /// Uncordon the node with the given ID by removing the associated label.
     async fn uncordon(&self, id: NodeId, label: String) -> Result<Node, ReplyError>;
+    /// Drain the node with the given ID and associate the label with the draining node.
+    async fn drain(&self, id: NodeId, label: String) -> Result<Node, ReplyError>;
 }
 
 impl TryFrom<node::Node> for Node {
@@ -48,6 +50,7 @@ impl TryFrom<node::Node> for Node {
                 spec.endpoint,
                 spec.labels.unwrap_or_default().value,
                 spec.cordon.map(|cordon| cordon.label),
+                spec.drain.map(|drain| drain.label),
             )
         });
         let node_state = match node_grpc_type.state {
@@ -84,6 +87,9 @@ impl From<Node> for node::Node {
             }),
             cordon: Some(NodeCordon {
                 label: spec.cordon_labels(),
+            }),
+            drain: Some(NodeDrain {
+                label: spec.drain_labels(),
             }),
         });
         let node_state = match node.state() {

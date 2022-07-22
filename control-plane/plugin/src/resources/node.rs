@@ -143,16 +143,24 @@ impl Cordoning for Node {
                 OutputFormat::None => {
                     // In case the output format is not specified, show a success message.
                     let cordon_labels = node
+                        .clone()
                         .into_body()
                         .spec
                         .map(|node_spec| node_spec.cordon_labels)
                         .unwrap_or_default();
-                    if cordon_labels.is_empty() {
+
+                    let drain_labels = node
+                        .into_body()
+                        .spec
+                        .map(|node_spec| node_spec.drain_labels)
+                        .unwrap_or_default();
+
+                    if cordon_labels.is_empty() && drain_labels.is_empty() {
                         println!("Node {} successfully uncordoned", id);
                     } else {
                         println!(
-                            "Cordon label successfully removed. Remaining cordon labels {:?}",
-                            cordon_labels
+                            "Cordon label successfully removed. Remaining cordon labels {:?} {:?}",
+                            cordon_labels, drain_labels,
                         );
                     }
                 }
