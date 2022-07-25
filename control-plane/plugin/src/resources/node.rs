@@ -54,7 +54,7 @@ impl CreateRows for openapi::models::Node {
             self.id,
             state.grpc_endpoint,
             state.status,
-            !spec.cordon_labels.is_empty(),
+            !(spec.cordon_labels.is_empty() && spec.drain_labels.is_empty()),
         ]];
         rows
     }
@@ -171,7 +171,7 @@ impl Cordoning for Node {
         }
     }
 
-    async fn get_cordon_labels(id: &Self::ID, output: &OutputFormat) {
+    async fn get_node_with_cordon_labels(id: &Self::ID, output: &OutputFormat) {
         match RestClient::client().nodes_api().get_node(id).await {
             Ok(node) => {
                 let node_display =
@@ -231,6 +231,19 @@ impl CreateRows for NodeDisplay {
                 // Add the cordon labels to each row.
                 rows.iter_mut()
                     .for_each(|row| row.add_cell(Cell::new(&cordon_labels_string)));
+
+                let drain_labels_string = self
+                    .inner
+                    .spec
+                    .as_ref()
+                    .unwrap_or(&NodeSpec::default())
+                    .drain_labels
+                    .join(", ");
+
+                // Add the drain labels to each row.
+                rows.iter_mut()
+                    .for_each(|row| row.add_cell(Cell::new(&drain_labels_string)));
+
                 rows
             }
         }

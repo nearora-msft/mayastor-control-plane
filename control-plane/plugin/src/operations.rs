@@ -75,5 +75,5 @@ pub trait Cordoning {
     type ID;
     async fn cordon(id: &Self::ID, label: &str, output: &utils::OutputFormat);
     async fn uncordon(id: &Self::ID, label: &str, output: &utils::OutputFormat);
-    async fn get_cordon_labels(id: &Self::ID, output: &utils::OutputFormat);
+    async fn get_node_with_cordon_labels(id: &Self::ID, output: &utils::OutputFormat);
 }
