@@ -99,7 +99,6 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::CordonLabels { .. } => todo!(),
             GetResources::DrainLabels { .. } => todo!(),
         },
         Operations::Drain(resource) => match resource {

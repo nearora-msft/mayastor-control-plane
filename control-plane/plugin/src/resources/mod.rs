@@ -32,9 +32,7 @@ pub enum GetResources {
     /// Currently disks having blobstore pools not created by control-plane are also shown as
     /// usable.
     BlockDevices(BlockDeviceArgs),
-    /// Get all cordon labels associated with the node ID
-    CordonLabels { id: NodeId },
-    /// Get all cordon labels associated with the node ID
+    /// Get all drain labels associated with the node ID
     DrainLabels { id: NodeId },
 }
 

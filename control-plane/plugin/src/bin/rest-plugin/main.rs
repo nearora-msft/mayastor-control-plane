@@ -88,7 +88,6 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::CordonLabels { .. } => todo!(),
             GetResources::DrainLabels { .. } => todo!(),
         },
         Operations::Scale(resource) => match resource {
