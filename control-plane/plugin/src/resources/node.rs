@@ -171,7 +171,7 @@ impl Cordoning for Node {
         }
     }
 
-    async fn get_labels(id: &Self::ID, output: &OutputFormat) {
+    async fn get_cordon_labels(id: &Self::ID, output: &OutputFormat) {
         match RestClient::client().nodes_api().get_node(id).await {
             Ok(node) => {
                 let node_display =

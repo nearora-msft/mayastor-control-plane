@@ -75,7 +75,7 @@ async fn execute(cli_args: CliArgs) {
             GetResources::Nodes => node::Nodes::list(&cli_args.output).await,
             GetResources::Node(args) => {
                 if args.show_cordon_labels() {
-                    node::Node::get_labels(&args.node_id(), &cli_args.output).await
+                    node::Node::get_cordon_labels(&args.node_id(), &cli_args.output).await
                 } else {
                     node::Node::get(&args.node_id(), &cli_args.output).await
                 }
