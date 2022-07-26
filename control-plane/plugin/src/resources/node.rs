@@ -247,6 +247,7 @@ impl CreateRows for NodeDisplay {
             }
             NodeDisplayFormat::Drain => {
                 let mut rows = self.inner.create_rows();
+                let drain_state_string = String::from("not draining"); // temporary - will get this from node state
                 let drain_labels_string = self
                     .inner
                     .spec
@@ -255,8 +256,10 @@ impl CreateRows for NodeDisplay {
                     .drain_labels
                     .join(", ");
                 // Add the drain labels to each row.
-                rows.iter_mut()
-                    .for_each(|row| row.add_cell(Cell::new(&drain_labels_string)));
+                rows.iter_mut().for_each(|row| {
+                    row.add_cell(Cell::new(&drain_state_string));
+                    row.add_cell(Cell::new(&drain_labels_string));
+                });
                 rows
             }
         }
@@ -274,6 +277,7 @@ impl GetHeaderRow for NodeDisplay {
                 header
             }
             NodeDisplayFormat::Drain => {
+                header.extend(vec!["DRAIN STATE"]);
                 header.extend(vec!["DRAIN LABELS"]);
                 header
             }
