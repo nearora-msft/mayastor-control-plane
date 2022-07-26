@@ -190,6 +190,7 @@ impl Cordoning for Node {
 enum NodeDisplayFormat {
     Default,
     CordonLabels,
+    Drain,
 }
 
 /// The NodeDisply structure is responsible for controlling the display formatting of Node objects.
@@ -244,6 +245,20 @@ impl CreateRows for NodeDisplay {
 
                 rows
             }
+            NodeDisplayFormat::Drain => {
+                let mut rows = self.inner.create_rows();
+                let drain_labels_string = self
+                    .inner
+                    .spec
+                    .as_ref()
+                    .unwrap_or(&NodeSpec::default())
+                    .drain_labels
+                    .join(", ");
+                // Add the drain labels to each row.
+                rows.iter_mut()
+                    .for_each(|row| row.add_cell(Cell::new(&drain_labels_string)));
+                rows
+            }
         }
     }
 }
@@ -256,6 +271,10 @@ impl GetHeaderRow for NodeDisplay {
             NodeDisplayFormat::Default => header,
             NodeDisplayFormat::CordonLabels => {
                 header.extend(vec!["CORDON LABELS"]);
+                header
+            }
+            NodeDisplayFormat::Drain => {
+                header.extend(vec!["DRAIN LABELS"]);
                 header
             }
         }
@@ -275,6 +294,17 @@ impl Drain for Node {
             Ok(node) => {
                 // Print table, json or yaml based on output format.
                 utils::print_table(output, node.into_body());
+            }
+            Err(e) => {
+                println!("Failed to get node {}. Error {}", id, e)
+            }
+        }
+    }
+    async fn get_node_drain(id: &Self::ID, output: &OutputFormat) {
+        match RestClient::client().nodes_api().get_node(id).await {
+            Ok(node) => {
+                let node_display = NodeDisplay::new(node.into_body(), NodeDisplayFormat::Drain);
+                print_table(output, node_display);
             }
             Err(e) => {
                 println!("Failed to get node {}. Error {}", id, e)

@@ -27,6 +27,7 @@ pub enum Operations {
 pub trait Drain {
     type ID;
     async fn drain(id: &Self::ID, label: String, output: &utils::OutputFormat);
+    async fn get_node_drain(id: &Self::ID, output: &utils::OutputFormat);
 }
 
 /// List trait.

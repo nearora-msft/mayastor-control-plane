@@ -99,7 +99,7 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::Drain { .. } => todo!(),
+            GetResources::Drain { id } => node::Node::get_node_drain(&id, &cli_args.output).await,
         },
         Operations::Drain(resource) => match resource {
             DrainResources::Node { id, label } => {

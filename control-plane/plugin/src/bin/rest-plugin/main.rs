@@ -88,7 +88,7 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::Drain { .. } => todo!(),
+            GetResources::Drain { id } => node::Node::get_node_drain(id, &cli_args.output).await,
         },
         Operations::Scale(resource) => match resource {
             ScaleResources::Volume { id, replica_count } => {
