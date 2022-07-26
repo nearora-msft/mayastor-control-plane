@@ -49,6 +49,8 @@ message NodeState {
   string endpoint = 2;
   // deemed status of the node
   NodeStatus status = 3;
+  // drain state
+  NodeDrainState drain_state = 4;
 }
 
 // Multiple nodes
@@ -66,6 +68,16 @@ enum NodeStatus {
   // Node is deemed offline if has missed the
   // registration keep alive deadline
   Offline = 2;
+}
+
+// Status of the Node
+enum NodeDrainState {
+    // Node has no drain labels
+    NotDraining = 0;
+    // Node has at least 1 drain label and at least 1 nexus
+    Draining = 1;
+    // Node has at least 1 drain label and no nexuses
+    Drained = 2;
 }
 
 // Get storage nodes by filter

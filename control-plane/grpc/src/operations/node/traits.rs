@@ -100,6 +100,7 @@ impl From<Node> for node::Node {
                     node_id: state.id.to_string(),
                     endpoint: state.grpc_endpoint.to_string(),
                     status: status as i32,
+                    drain_state: 0_i32, // hard coded for now
                 })
             }
         };
