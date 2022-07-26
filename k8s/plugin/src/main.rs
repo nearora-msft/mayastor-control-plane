@@ -99,7 +99,7 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::DrainLabels { .. } => todo!(),
+            GetResources::Drain { .. } => todo!(),
         },
         Operations::Drain(resource) => match resource {
             DrainResources::Node { id, label } => {

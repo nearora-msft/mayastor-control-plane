@@ -33,7 +33,7 @@ pub enum GetResources {
     /// usable.
     BlockDevices(BlockDeviceArgs),
     /// Get all drain labels associated with the node ID
-    DrainLabels { id: NodeId },
+    Drain { id: NodeId },
 }
 
 /// The types of resources that support the 'drain' operation.

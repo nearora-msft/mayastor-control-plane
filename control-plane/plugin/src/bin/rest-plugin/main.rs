@@ -88,7 +88,7 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::DrainLabels { .. } => todo!(),
+            GetResources::Drain { .. } => todo!(),
         },
         Operations::Scale(resource) => match resource {
             ScaleResources::Volume { id, replica_count } => {
