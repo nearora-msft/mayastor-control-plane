@@ -154,13 +154,13 @@ impl Cordoning for Node {
                         .spec
                         .map(|node_spec| node_spec.drain_labels)
                         .unwrap_or_default();
-
-                    if cordon_labels.is_empty() && drain_labels.is_empty() {
+                    let labels = [cordon_labels, drain_labels].concat();
+                    if labels.is_empty() {
                         println!("Node {} successfully uncordoned", id);
                     } else {
                         println!(
-                            "Cordon label successfully removed. Remaining cordon labels {:?} {:?}",
-                            cordon_labels, drain_labels,
+                            "Cordon label successfully removed. Remaining cordon labels {:?}",
+                            labels,
                         );
                     }
                 }
@@ -220,18 +220,13 @@ impl CreateRows for NodeDisplay {
             NodeDisplayFormat::Default => self.inner.create_rows(),
             NodeDisplayFormat::CordonLabels => {
                 let mut rows = self.inner.create_rows();
-                let cordon_labels_string = self
+                let mut cordon_labels_string = self
                     .inner
                     .spec
                     .as_ref()
                     .unwrap_or(&NodeSpec::default())
                     .cordon_labels
                     .join(", ");
-
-                // Add the cordon labels to each row.
-                rows.iter_mut()
-                    .for_each(|row| row.add_cell(Cell::new(&cordon_labels_string)));
-
                 let drain_labels_string = self
                     .inner
                     .spec
@@ -239,10 +234,13 @@ impl CreateRows for NodeDisplay {
                     .unwrap_or(&NodeSpec::default())
                     .drain_labels
                     .join(", ");
-
-                // Add the drain labels to each row.
+                if !cordon_labels_string.is_empty() && !drain_labels_string.is_empty() {
+                    cordon_labels_string += ", ";
+                }
+                cordon_labels_string += &drain_labels_string;
+                // Add the cordon labels to each row.
                 rows.iter_mut()
-                    .for_each(|row| row.add_cell(Cell::new(&drain_labels_string)));
+                    .for_each(|row| row.add_cell(Cell::new(&cordon_labels_string)));
 
                 rows
             }
