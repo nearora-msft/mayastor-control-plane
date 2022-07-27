@@ -105,6 +105,21 @@ impl Default for NodeStatus {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, EnumString, ToString, Eq, PartialEq)]
+pub enum DrainState {
+    /// Node has no drain cordon labels
+    NotDraining,
+    /// Node is draining
+    Draining,
+    /// Node is drained
+    Drained,
+}
+impl Default for DrainState {
+    fn default() -> Self {
+        Self::NotDraining
+    }
+}
+
 /// Node State information
 #[derive(Serialize, Deserialize, Default, Debug, Clone, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -115,14 +130,22 @@ pub struct NodeState {
     pub grpc_endpoint: String,
     /// deemed status of the node
     pub status: NodeStatus,
+    /// drainstate
+    pub drain_state: DrainState,
 }
 impl NodeState {
     /// Return a new `Self`
-    pub fn new(id: NodeId, grpc_endpoint: String, status: NodeStatus) -> Self {
+    pub fn new(
+        id: NodeId,
+        grpc_endpoint: String,
+        status: NodeStatus,
+        drain_state: DrainState,
+    ) -> Self {
         Self {
             id,
             grpc_endpoint,
             status,
+            drain_state,
         }
     }
     /// Get the node identification
@@ -137,19 +160,23 @@ impl NodeState {
     pub fn status(&self) -> &NodeStatus {
         &self.status
     }
+    /// Get the drain state
+    pub fn drain_state(&self) -> &DrainState {
+        &self.drain_state
+    }
 }
 
 bus_impl_string_id!(NodeId, "ID of a node");
 
 impl From<NodeState> for models::NodeState {
     fn from(src: NodeState) -> Self {
-        Self::new(src.grpc_endpoint, src.id, src.status)
+        Self::new(src.grpc_endpoint, src.id, src.status, src.drain_state)
     }
 }
 impl From<&NodeState> for models::NodeState {
     fn from(src: &NodeState) -> Self {
         let src = src.clone();
-        Self::new(src.grpc_endpoint, src.id, src.status)
+        Self::new(src.grpc_endpoint, src.id, src.status, src.drain_state)
     }
 }
 
@@ -159,6 +186,16 @@ impl From<NodeStatus> for models::NodeStatus {
             NodeStatus::Unknown => Self::Unknown,
             NodeStatus::Online => Self::Online,
             NodeStatus::Offline => Self::Offline,
+        }
+    }
+}
+
+impl From<DrainState> for models::DrainState {
+    fn from(src: DrainState) -> Self {
+        match src {
+            DrainState::NotDraining => Self::NotDraining,
+            DrainState::Draining => Self::Draining,
+            DrainState::Drained => Self::Drained,
         }
     }
 }

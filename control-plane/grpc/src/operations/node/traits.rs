@@ -13,7 +13,7 @@ use common_lib::{
     types::v0::{
         store::node::NodeSpec,
         transport::{
-            BlockDevice, Filesystem, Filter, GetBlockDevices, Node, NodeId, NodeState, NodeStatus,
+            BlockDevice, DrainState, Filesystem, Filter, GetBlockDevices, Node, NodeId, NodeState, NodeStatus,
             Partition,
         },
     },
@@ -65,7 +65,22 @@ impl TryFrom<node::Node> for Node {
                         ))
                     }
                 };
-                Some(NodeState::new(state.node_id.into(), state.endpoint, status))
+                let drain_state: DrainState = match node::DrainState::from_i32(state.drain_state) {
+                    Some(drain_state) => drain_state.into(),
+                    None => {
+                        return Err(ReplyError::invalid_argument(
+                            ResourceKind::Node,
+                            "node.state.drain_state",
+                            "".to_string(),
+                        ))
+                    }
+                };
+                Some(NodeState::new(
+                    state.node_id.into(),
+                    state.endpoint,
+                    status,
+                    drain_state,
+                ))
             }
             None => None,
         };
@@ -96,11 +111,13 @@ impl From<Node> for node::Node {
             None => None,
             Some(state) => {
                 let status: node::NodeStatus = state.status.clone().into();
+                let drain_state: node::DrainState = state.drain_state.clone().into();
+                // get drain_state here
                 Some(node::NodeState {
                     node_id: state.id.to_string(),
                     endpoint: state.grpc_endpoint.to_string(),
                     status: status as i32,
-                    drain_state: 0_i32, // hard coded for now
+                    drain_state: drain_state as i32,
                 })
             }
         };
@@ -161,6 +178,26 @@ impl From<NodeStatus> for node::NodeStatus {
             NodeStatus::Unknown => Self::Unknown,
             NodeStatus::Online => Self::Online,
             NodeStatus::Offline => Self::Offline,
+        }
+    }
+}
+
+impl From<node::DrainState> for DrainState {
+    fn from(src: node::DrainState) -> Self {
+        match src {
+            node::DrainState::NotDraining => Self::NotDraining,
+            node::DrainState::Draining => Self::Draining,
+            node::DrainState::Drained => Self::Drained,
+        }
+    }
+}
+
+impl From<DrainState> for node::DrainState {
+    fn from(src: DrainState) -> Self {
+        match src {
+            DrainState::NotDraining => Self::NotDraining,
+            DrainState::Draining => Self::Draining,
+            DrainState::Drained => Self::Drained,
         }
     }
 }

@@ -44,11 +44,6 @@ impl apis::actix_server::Nodes for RestApi {
         let node = client().drain(id.into(), label).await?;
         Ok(node.into())
     }
-
-    async fn get_node_drain(Path(_id): Path<String>) -> Result<String, RestError<RestJsonError>> {
-        let label = "test";
-        Ok(label.into())
-    }
 }
 
 /// returns node from node option and returns an error on non existence

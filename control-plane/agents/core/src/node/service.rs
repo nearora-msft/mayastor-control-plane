@@ -8,7 +8,7 @@ use common::{
     v0::msg_translation::IoEngineToAgent,
 };
 use common_lib::types::v0::transport::{
-    Deregister, Filter, Node, NodeId, NodeState, NodeStatus, Register,
+    Deregister, DrainState, Filter, Node, NodeId, NodeState, NodeStatus, Register,
 };
 
 use crate::core::wrapper::InternalOps;
@@ -190,6 +190,7 @@ impl Service {
             id: registration.id.clone(),
             grpc_endpoint: registration.grpc_endpoint.clone(),
             status: NodeStatus::Online,
+            drain_state: DrainState::NotDraining,
         };
 
         let nodes = self.registry.nodes();

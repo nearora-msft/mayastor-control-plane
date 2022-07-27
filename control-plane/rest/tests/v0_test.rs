@@ -104,6 +104,7 @@ async fn client_test(cluster: &Cluster, auth: &bool) {
                 cluster.composer().container_ip(cluster.node(0).as_str())
             ),
             status: models::NodeStatus::Online,
+            drain_state: models::DrainState::NotDraining,
         }),
     };
     assert_eq!(listed_node.unwrap(), node);

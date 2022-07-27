@@ -50,7 +50,7 @@ message NodeState {
   // deemed status of the node
   NodeStatus status = 3;
   // drain state
-  NodeDrainState drain_state = 4;
+  DrainState drain_state = 4;
 }
 
 // Multiple nodes
@@ -71,7 +71,7 @@ enum NodeStatus {
 }
 
 // Status of the Node
-enum NodeDrainState {
+enum DrainState {
     // Node has no drain labels
     NotDraining = 0;
     // Node has at least 1 drain label and at least 1 nexus

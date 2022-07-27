@@ -314,30 +314,6 @@ paths:
           $ref: '#/components/responses/ServerError'
       security:
         - JWT: [ ]
-  '/nodes/{id}/drain':
-    get:
-      tags:
-        - Nodes
-      operationId: get_node_drain
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: string
-        '4XX':
-          $ref: '#/components/responses/ClientError'
-        '5XX':
-          $ref: '#/components/responses/ServerError'
-      security:
-        - JWT: [ ]
   '/nodes/{id}/nexuses':
     get:
       tags:
@@ -1889,6 +1865,13 @@ components:
       required:
         - size
         - thin
+    DrainState:
+      description: current drain state
+      type: string
+      enum:
+        - NotDraining
+        - Draining
+        - Drained
     PoolTopology:
       example:
         explicit: null
@@ -2163,10 +2146,13 @@ components:
           $ref: '#/components/schemas/NodeId'
         status:
           $ref: '#/components/schemas/NodeStatus'
+        drainState:
+            $ref: '#/components/schemas/DrainState'
       required:
         - grpcEndpoint
         - id
         - status
+        - drainState
     Node:
       description: io-engine storage node information
       type: object

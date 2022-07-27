@@ -100,9 +100,6 @@ impl NodeSpec {
     pub fn cordon_labels(&self) -> Vec<String> {
         self.cordon_labels.clone()
     }
-    pub fn draining(&self) -> bool {
-        !self.drain_labels.is_empty()
-    }
     /// Returns the drain labels
     pub fn drain_labels(&self) -> Vec<String> {
         self.drain_labels.clone()

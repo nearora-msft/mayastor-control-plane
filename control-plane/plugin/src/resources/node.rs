@@ -49,6 +49,7 @@ impl CreateRows for openapi::models::Node {
             id: spec.id,
             grpc_endpoint: spec.grpc_endpoint,
             status: openapi::models::NodeStatus::Unknown,
+            drain_state: openapi::models::DrainState::NotDraining,
         });
         let rows = vec![row![
             self.id,
@@ -289,13 +290,35 @@ impl GetHeaderRow for NodeDisplay {
 impl Drain for Node {
     type ID = NodeId;
     async fn drain(id: &Self::ID, label: String, output: &utils::OutputFormat) {
-        // loop this call until the put_node_drain call returns
         match RestClient::client()
             .nodes_api()
             .put_node_drain(id, &label)
             .await
         {
             Ok(node) => {
+                // loop this call until the put_node_drain call returns
+                loop {
+                    match RestClient::client().nodes_api().get_node(id).await {
+                        Ok(node) => {
+                            if !node.into_body().spec.unwrap().drain_labels.is_empty() {
+                                println!("has labels");
+                                // TODO when there are no nexuses, break, we are done
+                            } else {
+                                break; // someone else removed the drain cordon
+                            }
+                        }
+                        Err(e) => {
+                            println!("Failed to get node {}. Error {}", id, e);
+                            break;
+                        }
+                    }
+                }
+                //      get node
+                //      if node has drain_label
+                //          if node has no nexuses
+                //             break
+                //      else
+                //          break
                 // Print table, json or yaml based on output format.
                 utils::print_table(output, node.into_body());
             }
@@ -304,6 +327,7 @@ impl Drain for Node {
             }
         }
     }
+
     async fn get_node_drain(id: &Self::ID, output: &OutputFormat) {
         match RestClient::client().nodes_api().get_node(id).await {
             Ok(node) => {

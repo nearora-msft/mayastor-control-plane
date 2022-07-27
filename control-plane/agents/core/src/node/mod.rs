@@ -55,7 +55,12 @@ mod tests {
                 None,
                 None,
             )),
-            Some(NodeState::new(id, endpoint, status)),
+            Some(NodeState::new(
+                id,
+                endpoint,
+                status,
+                DrainState::NotDraining,
+            )),
         )
     }
 
