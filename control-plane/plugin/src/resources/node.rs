@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use openapi::models::NodeSpec;
 use prettytable::{Cell, Row};
 use serde::Serialize;
+use tokio::time::Duration;
 
 #[derive(Debug, Clone, clap::Args)]
 /// Arguments used when getting a node.
@@ -300,11 +301,20 @@ impl Drain for Node {
                 loop {
                     match RestClient::client().nodes_api().get_node(id).await {
                         Ok(node) => {
-                            if !node.into_body().spec.unwrap().drain_labels.is_empty() {
+                            let node_body = &node.into_body();
+                            let spec = node_body.spec.as_ref().unwrap();
+                            let state = node_body.state.as_ref().unwrap();
+                            if spec.drain_labels.is_empty() {
+                                println!("no labels");
+                                break;
+                            } else {
                                 println!("has labels");
                                 // TODO when there are no nexuses, break, we are done
-                            } else {
-                                break; // someone else removed the drain cordon
+                                if state.drain_state != openapi::models::DrainState::Draining {
+                                    println!("not draining");
+                                    break;
+                                }
+                                println!("draining");
                             }
                         }
                         Err(e) => {
@@ -312,14 +322,9 @@ impl Drain for Node {
                             break;
                         }
                     }
+                    let sleep = Duration::from_secs(1);
+                    tokio::time::sleep(sleep).await;
                 }
-                //      get node
-                //      if node has drain_label
-                //          if node has no nexuses
-                //             break
-                //      else
-                //          break
-                // Print table, json or yaml based on output format.
                 utils::print_table(output, node.into_body());
             }
             Err(e) => {
