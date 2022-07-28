@@ -96,6 +96,10 @@ impl NodeSpec {
     pub fn cordoned(&self) -> bool {
         !self.cordon_labels.is_empty() || !self.drain_labels.is_empty()
     }
+    /// Returns whether or not the node is cordoned for drain.
+    pub fn cordoned_for_drain(&self) -> bool {
+        !self.drain_labels.is_empty()
+    }
     /// Returns the cordon labels
     pub fn cordon_labels(&self) -> Vec<String> {
         self.cordon_labels.clone()

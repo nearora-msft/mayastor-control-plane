@@ -45,6 +45,7 @@ impl Registry {
 
     /// Get node state by its `NodeId`
     pub(crate) async fn get_node_state(&self, node_id: &NodeId) -> Result<NodeState, SvcError> {
+        println!("get_node_state");
         match self.nodes().read().await.get(node_id).cloned() {
             None => {
                 if self.specs().get_node(node_id).is_ok() {
@@ -58,13 +59,18 @@ impl Registry {
                 }
             }
             Some(node) => {
-                let drains = self.specs().get_node(node_id).unwrap().drain_labels();
+                let cordoned_for_drain =
+                    self.specs().get_node(node_id).unwrap().cordoned_for_drain();
                 let nexuses = self.get_node_nexuses(node_id).await;
                 let mut drain_state = DrainState::NotDraining;
-                if !drains.is_empty() {
+                println!("not draining?");
+                if cordoned_for_drain {
+                    println!("cordoned");
                     if nexuses.unwrap().is_empty() {
+                        println!("drained");
                         drain_state = DrainState::Drained;
                     } else {
+                        println!("draining");
                         drain_state = DrainState::Draining;
                     }
                 }

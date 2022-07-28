@@ -249,7 +249,13 @@ impl CreateRows for NodeDisplay {
             }
             NodeDisplayFormat::Drain => {
                 let mut rows = self.inner.create_rows();
-                let drain_state_string = String::from("not draining"); // temporary - will get this from node state
+
+                let drain_state_string = match self.inner.state.as_ref().unwrap().drain_state {
+                    openapi::models::DrainState::NotDraining => "Not Draining",
+                    openapi::models::DrainState::Draining => "Draining",
+                    openapi::models::DrainState::Drained => "Drained",
+                };
+
                 let drain_labels_string = self
                     .inner
                     .spec
@@ -259,7 +265,7 @@ impl CreateRows for NodeDisplay {
                     .join(", ");
                 // Add the drain labels to each row.
                 rows.iter_mut().for_each(|row| {
-                    row.add_cell(Cell::new(&drain_state_string));
+                    row.add_cell(Cell::new(drain_state_string));
                     row.add_cell(Cell::new(&drain_labels_string));
                 });
                 rows

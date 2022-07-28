@@ -193,7 +193,7 @@ impl Service {
             status: NodeStatus::Online,
             drain_state: DrainState::NotDraining,
         };
-
+        println!("register_state");
         let nodes = self.registry.nodes();
         let node = nodes.write().await.get_mut(&node_state.id).cloned();
         let send_event = match node {
@@ -352,6 +352,7 @@ impl Service {
     }
 
     async fn drain(&self, id: NodeId, label: String) -> Result<Node, SvcError> {
+        println!("setting drain");
         let spec = self
             .registry
             .specs()
