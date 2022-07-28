@@ -1,6 +1,6 @@
 use crate::core::{registry::Registry, wrapper::NodeWrapper};
 use common::errors::SvcError;
-use common_lib::types::v0::transport::{NodeId, NodeState, Register};
+use common_lib::types::v0::transport::{DrainState, NodeId, NodeState, Register};
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -57,7 +57,21 @@ impl Registry {
                     })
                 }
             }
-            Some(node) => Ok(node.read().await.node_state().clone()),
+            Some(node) => {
+                let drains = self.specs().get_node(node_id).unwrap().drain_labels();
+                let nexuses = self.get_node_nexuses(node_id).await;
+                let mut drain_state = DrainState::NotDraining;
+                if !drains.is_empty() {
+                    if nexuses.unwrap().is_empty() {
+                        drain_state = DrainState::Drained;
+                    } else {
+                        drain_state = DrainState::Draining;
+                    }
+                }
+                let mut copy_node_state = node.read().await.node_state().clone();
+                copy_node_state.drain_state = drain_state;
+                Ok(copy_node_state)
+            }
         }
     }
 

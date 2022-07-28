@@ -76,6 +76,7 @@ impl NodeCommsTimeout {
 #[tonic::async_trait]
 impl NodeOperations for Service {
     async fn get(&self, filter: Filter, _ctx: Option<Context>) -> Result<Nodes, ReplyError> {
+        println!("Node get request");
         let req = GetNodes::new(filter);
         let nodes = self.get_nodes(&req).await?;
         Ok(nodes)
@@ -254,6 +255,7 @@ impl Service {
 
     /// Get nodes by filter
     pub(crate) async fn get_nodes(&self, request: &GetNodes) -> Result<Nodes, SvcError> {
+        println!("Service get_nodes request");
         match request.filter() {
             Filter::None => {
                 let node_states = self.registry.get_node_states().await;

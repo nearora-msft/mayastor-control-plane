@@ -13,8 +13,8 @@ use common_lib::{
     types::v0::{
         store::node::NodeSpec,
         transport::{
-            BlockDevice, DrainState, Filesystem, Filter, GetBlockDevices, Node, NodeId, NodeState, NodeStatus,
-            Partition,
+            BlockDevice, DrainState, Filesystem, Filter, GetBlockDevices, Node, NodeId, NodeState,
+            NodeStatus, Partition,
         },
     },
 };
