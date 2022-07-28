@@ -87,6 +87,8 @@ async fn execute(cli_args: CliArgs) {
             GetResources::Node(args) => {
                 if args.show_cordon_labels() {
                     node::Node::get_node_with_cordon_labels(&args.node_id(), &cli_args.output).await
+                } else if args.show_drain() {
+                    node::Node::get_node_drain(&args.node_id(), &cli_args.output).await
                 } else {
                     node::Node::get(&args.node_id(), &cli_args.output).await
                 }
@@ -99,7 +101,6 @@ async fn execute(cli_args: CliArgs) {
                 )
                 .await
             }
-            GetResources::Drain { id } => node::Node::get_node_drain(&id, &cli_args.output).await,
         },
         Operations::Drain(resource) => match resource {
             DrainResources::Node { id, label } => {

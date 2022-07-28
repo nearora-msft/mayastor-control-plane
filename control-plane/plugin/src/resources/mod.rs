@@ -32,8 +32,6 @@ pub enum GetResources {
     /// Currently disks having blobstore pools not created by control-plane are also shown as
     /// usable.
     BlockDevices(BlockDeviceArgs),
-    /// Get all drain labels associated with the node ID
-    Drain { id: NodeId },
 }
 
 /// The types of resources that support the 'drain' operation.

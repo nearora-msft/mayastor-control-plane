@@ -21,6 +21,9 @@ pub struct GetNodeArgs {
     #[clap(long)]
     /// Shows the cordon labels associated with the node
     show_cordon_labels: bool,
+    #[clap(long)]
+    /// Shows the drain information and filter for draining / drained nodes
+    show_drain: bool,
 }
 
 impl GetNodeArgs {
@@ -32,6 +35,11 @@ impl GetNodeArgs {
     /// Return whether or not we should show the cordon labels.
     pub fn show_cordon_labels(&self) -> bool {
         self.show_cordon_labels
+    }
+
+    /// Return whether or not we should show the drain labels.
+    pub fn show_drain(&self) -> bool {
+        self.show_drain
     }
 }
 
