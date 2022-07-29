@@ -1,4 +1,7 @@
-use crate::resources::{blockdevice::BlockDeviceArgs, node::GetNodeArgs};
+use crate::resources::{
+    blockdevice::BlockDeviceArgs,
+    node::{GetNodeArgs, GetNodesArgs},
+};
 
 pub mod blockdevice;
 pub mod node;
@@ -25,7 +28,7 @@ pub enum GetResources {
     /// Get pool with the given ID.
     Pool { id: PoolId },
     /// Get all nodes.
-    Nodes,
+    Nodes(GetNodesArgs),
     /// Get node with the given ID.
     Node(GetNodeArgs),
     /// Get BlockDevices present on the Node. Lists usable devices by default.

@@ -30,6 +30,13 @@ pub trait Drain {
     async fn get_node_drain(id: &Self::ID, output: &utils::OutputFormat);
 }
 
+// Drain trait.
+/// To be implemented by resources which support the 'drain list' operation.
+#[async_trait(?Send)]
+pub trait DrainList {
+    async fn list_drain(output: &utils::OutputFormat);
+}
+
 /// List trait.
 /// To be implemented by resources which support the 'list' operation.
 #[async_trait(?Send)]

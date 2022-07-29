@@ -3,7 +3,7 @@ use clap::Parser;
 use openapi::tower::client::Url;
 use opentelemetry::global;
 use plugin::{
-    operations::{Cordoning, Drain, Get, GetBlockDevices, List, ReplicaTopology, Scale},
+    operations::{Cordoning, Drain, DrainList, Get, GetBlockDevices, List, ReplicaTopology, Scale},
     resources::{
         blockdevice, node, pool, volume, CordonResources, DrainResources, GetResources,
         ScaleResources,
@@ -83,7 +83,13 @@ async fn execute(cli_args: CliArgs) {
             }
             GetResources::Pools => pool::Pools::list(&cli_args.output).await,
             GetResources::Pool { id } => pool::Pool::get(&id, &cli_args.output).await,
-            GetResources::Nodes => node::Nodes::list(&cli_args.output).await,
+            GetResources::Nodes(args) => {
+                if args.show_drain() {
+                    node::Nodes::list_drain(&cli_args.output).await
+                } else {
+                    node::Nodes::list(&cli_args.output).await
+                }
+            }
             GetResources::Node(args) => {
                 if args.show_cordon_labels() {
                     node::Node::get_node_with_cordon_labels(&args.node_id(), &cli_args.output).await

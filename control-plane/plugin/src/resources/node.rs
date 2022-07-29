@@ -1,5 +1,5 @@
 use crate::{
-    operations::{Cordoning, Drain, Get, List},
+    operations::{Cordoning, Drain, DrainList, Get, List},
     resources::{
         utils,
         utils::{print_table, CreateRows, GetHeaderRow, OutputFormat},
@@ -38,6 +38,21 @@ impl GetNodeArgs {
     }
 
     /// Return whether or not we should show the drain labels.
+    pub fn show_drain(&self) -> bool {
+        self.show_drain
+    }
+}
+
+#[derive(Debug, Clone, clap::Args)]
+/// Arguments used when getting a node.
+pub struct GetNodesArgs {
+    #[clap(long)]
+    /// Shows the drain information and filter for draining / drained nodes
+    show_drain: bool,
+}
+
+impl GetNodesArgs {
+    /// Return whether or not we should show the drain labels and filter based on drain labels
     pub fn show_drain(&self) -> bool {
         self.show_drain
     }
@@ -355,6 +370,23 @@ impl Drain for Node {
             }
             Err(e) => {
                 println!("Failed to get node {}. Error {}", id, e)
+            }
+        }
+    }
+}
+
+#[async_trait(?Send)]
+impl DrainList for Nodes {
+    async fn list_drain(output: &utils::OutputFormat) {
+        match RestClient::client().nodes_api().get_nodes().await {
+            Ok(nodes) => {
+                // iterate through the nodes and filter for only those that have drain labels
+                // then print with the format NodeDisplayFormat::Drain
+                // Print table, json or yaml based on output format.
+                utils::print_table(output, nodes.into_body());
+            }
+            Err(e) => {
+                println!("Failed to list nodes. Error {}", e)
             }
         }
     }
