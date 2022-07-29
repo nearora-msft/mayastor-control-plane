@@ -383,7 +383,13 @@ impl DrainList for Nodes {
                 // iterate through the nodes and filter for only those that have drain labels
                 // then print with the format NodeDisplayFormat::Drain
                 // Print table, json or yaml based on output format.
-                utils::print_table(output, nodes.into_body());
+                let nodelist = nodes.into_body();
+                let mut filteredlist = nodelist;
+                // remove nodes with no drain labels
+                filteredlist.retain(|i| {
+                    i.spec.is_some() && !i.spec.as_ref().unwrap().drain_labels.is_empty()
+                });
+                utils::print_table(output, filteredlist);
             }
             Err(e) => {
                 println!("Failed to list nodes. Error {}", e)
