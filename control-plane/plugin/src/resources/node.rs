@@ -224,7 +224,7 @@ enum NodeDisplayFormat {
 #[derive(Serialize, Debug)]
 struct NodeDisplay {
     #[serde(flatten)]
-    inner: openapi::models::Node,
+    inner: Vec<openapi::models::Node>,
     #[serde(skip)]
     format: NodeDisplayFormat,
 }
@@ -232,8 +232,12 @@ struct NodeDisplay {
 impl NodeDisplay {
     /// Create a new `NodeDisplay` instance.
     pub(crate) fn new(node: openapi::models::Node, format: NodeDisplayFormat) -> Self {
+        let vec: Vec<openapi::models::Node> = vec![node];
+        Self { inner: vec, format }
+    }
+    pub(crate) fn new_nodes(nodes: Vec<openapi::models::Node>, format: NodeDisplayFormat) -> Self {
         Self {
-            inner: node,
+            inner: nodes,
             format,
         }
     }
@@ -246,51 +250,47 @@ impl CreateRows for NodeDisplay {
             NodeDisplayFormat::Default => self.inner.create_rows(),
             NodeDisplayFormat::CordonLabels => {
                 let mut rows = self.inner.create_rows();
-                let mut cordon_labels_string = self
-                    .inner
-                    .spec
-                    .as_ref()
-                    .unwrap_or(&NodeSpec::default())
-                    .cordon_labels
-                    .join(", ");
-                let drain_labels_string = self
-                    .inner
-                    .spec
-                    .as_ref()
-                    .unwrap_or(&NodeSpec::default())
-                    .drain_labels
-                    .join(", ");
-                if !cordon_labels_string.is_empty() && !drain_labels_string.is_empty() {
-                    cordon_labels_string += ", ";
+                for (pos, node) in self.inner.iter().enumerate() {
+                    let mut cordon_labels_string = node
+                        .spec
+                        .as_ref()
+                        .unwrap_or(&NodeSpec::default())
+                        .cordon_labels
+                        .join(", ");
+                    let drain_labels_string = node
+                        .spec
+                        .as_ref()
+                        .unwrap_or(&NodeSpec::default())
+                        .drain_labels
+                        .join(", ");
+                    if !cordon_labels_string.is_empty() && !drain_labels_string.is_empty() {
+                        cordon_labels_string += ", ";
+                    }
+                    cordon_labels_string += &drain_labels_string;
+                    // Add the cordon labels to each row.
+                    rows[pos].add_cell(Cell::new(&cordon_labels_string));
                 }
-                cordon_labels_string += &drain_labels_string;
-                // Add the cordon labels to each row.
-                rows.iter_mut()
-                    .for_each(|row| row.add_cell(Cell::new(&cordon_labels_string)));
-
                 rows
             }
             NodeDisplayFormat::Drain => {
                 let mut rows = self.inner.create_rows();
+                for (pos, node) in self.inner.iter().enumerate() {
+                    let drain_state_string = match node.state.as_ref().unwrap().drain_state {
+                        openapi::models::DrainState::NotDraining => "Not Draining",
+                        openapi::models::DrainState::Draining => "Draining",
+                        openapi::models::DrainState::Drained => "Drained",
+                    };
 
-                let drain_state_string = match self.inner.state.as_ref().unwrap().drain_state {
-                    openapi::models::DrainState::NotDraining => "Not Draining",
-                    openapi::models::DrainState::Draining => "Draining",
-                    openapi::models::DrainState::Drained => "Drained",
-                };
-
-                let drain_labels_string = self
-                    .inner
-                    .spec
-                    .as_ref()
-                    .unwrap_or(&NodeSpec::default())
-                    .drain_labels
-                    .join(", ");
-                // Add the drain labels to each row.
-                rows.iter_mut().for_each(|row| {
-                    row.add_cell(Cell::new(drain_state_string));
-                    row.add_cell(Cell::new(&drain_labels_string));
-                });
+                    let drain_labels_string = node
+                        .spec
+                        .as_ref()
+                        .unwrap_or(&NodeSpec::default())
+                        .drain_labels
+                        .join(", ");
+                    // Add the drain labels to each row.
+                    rows[pos].add_cell(Cell::new(drain_state_string));
+                    rows[pos].add_cell(Cell::new(&drain_labels_string));
+                }
                 rows
             }
         }
@@ -389,7 +389,8 @@ impl DrainList for Nodes {
                 filteredlist.retain(|i| {
                     i.spec.is_some() && !i.spec.as_ref().unwrap().drain_labels.is_empty()
                 });
-                utils::print_table(output, filteredlist);
+                let node_display = NodeDisplay::new_nodes(filteredlist, NodeDisplayFormat::Drain);
+                utils::print_table(output, node_display);
             }
             Err(e) => {
                 println!("Failed to list nodes. Error {}", e)
