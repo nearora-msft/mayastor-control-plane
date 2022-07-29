@@ -249,8 +249,9 @@ impl CreateRows for NodeDisplay {
         match self.format {
             NodeDisplayFormat::Default => self.inner.create_rows(),
             NodeDisplayFormat::CordonLabels => {
-                let mut rows = self.inner.create_rows();
-                for (pos, node) in self.inner.iter().enumerate() {
+                let mut rows = vec![];
+                for node in self.inner.iter() {
+                    let mut row = node.create_rows();
                     let mut cordon_labels_string = node
                         .spec
                         .as_ref()
@@ -268,13 +269,15 @@ impl CreateRows for NodeDisplay {
                     }
                     cordon_labels_string += &drain_labels_string;
                     // Add the cordon labels to each row.
-                    rows[pos].add_cell(Cell::new(&cordon_labels_string));
+                    row[0].add_cell(Cell::new(&cordon_labels_string));
+                    rows.push(row[0].clone());
                 }
                 rows
             }
             NodeDisplayFormat::Drain => {
-                let mut rows = self.inner.create_rows();
-                for (pos, node) in self.inner.iter().enumerate() {
+                let mut rows = vec![];
+                for node in self.inner.iter() {
+                    let mut row = node.create_rows();
                     let drain_state_string = match node.state.as_ref().unwrap().drain_state {
                         openapi::models::DrainState::NotDraining => "Not Draining",
                         openapi::models::DrainState::Draining => "Draining",
@@ -288,8 +291,9 @@ impl CreateRows for NodeDisplay {
                         .drain_labels
                         .join(", ");
                     // Add the drain labels to each row.
-                    rows[pos].add_cell(Cell::new(drain_state_string));
-                    rows[pos].add_cell(Cell::new(&drain_labels_string));
+                    row[0].add_cell(Cell::new(drain_state_string));
+                    row[0].add_cell(Cell::new(&drain_labels_string));
+                    rows.push(row[0].clone());
                 }
                 rows
             }
@@ -326,24 +330,22 @@ impl Drain for Node {
             .await
         {
             Ok(node) => {
-                // loop this call until the put_node_drain call returns
+                // loop this call until no longer draining
                 loop {
                     match RestClient::client().nodes_api().get_node(id).await {
                         Ok(node) => {
                             let node_body = &node.into_body();
-                            let spec = node_body.spec.as_ref().unwrap();
                             let state = node_body.state.as_ref().unwrap();
-                            if spec.drain_labels.is_empty() {
-                                println!("no labels");
-                                break;
-                            } else {
-                                println!("has labels");
-                                // TODO when there are no nexuses, break, we are done
-                                if state.drain_state != openapi::models::DrainState::Draining {
-                                    println!("not draining");
+                            match state.drain_state {
+                                openapi::models::DrainState::NotDraining => {
+                                    println!("Drain has been cancelled");
                                     break;
                                 }
-                                println!("draining");
+                                openapi::models::DrainState::Drained => {
+                                    println!("Drain completed");
+                                    break;
+                                }
+                                openapi::models::DrainState::Draining => {}
                             }
                         }
                         Err(e) => {
@@ -382,7 +384,6 @@ impl DrainList for Nodes {
             Ok(nodes) => {
                 // iterate through the nodes and filter for only those that have drain labels
                 // then print with the format NodeDisplayFormat::Drain
-                // Print table, json or yaml based on output format.
                 let nodelist = nodes.into_body();
                 let mut filteredlist = nodelist;
                 // remove nodes with no drain labels

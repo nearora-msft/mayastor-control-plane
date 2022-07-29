@@ -17,7 +17,28 @@ impl Registry {
         let nodes = self.nodes().read().await;
         let mut nodes_vec = vec![];
         for node in nodes.values() {
-            nodes_vec.push(node.read().await.node_state().clone());
+            let node_id = node.read().await.id().clone();
+            let cordoned_for_drain = self
+                .specs()
+                .get_node(&node_id)
+                .unwrap()
+                .cordoned_for_drain();
+            let nexuses = self.get_node_nexuses(&node_id).await;
+            let mut drain_state = DrainState::NotDraining;
+            println!("not draining?");
+            if cordoned_for_drain {
+                println!("cordoned");
+                if nexuses.unwrap().is_empty() {
+                    println!("drained");
+                    drain_state = DrainState::Drained;
+                } else {
+                    println!("draining");
+                    drain_state = DrainState::Draining;
+                }
+            }
+            let mut copy_node_state = node.read().await.node_state().clone();
+            copy_node_state.drain_state = drain_state;
+            nodes_vec.push(copy_node_state.clone());
         }
         nodes_vec
     }
