@@ -1,6 +1,6 @@
 use crate::resources::{
     blockdevice::BlockDeviceArgs,
-    node::{GetNodeArgs, GetNodesArgs},
+    node::{DrainNodeArgs, GetNodeArgs, GetNodesArgs},
 };
 
 pub mod blockdevice;
@@ -41,12 +41,13 @@ pub enum GetResources {
 #[derive(clap::Subcommand, Debug)]
 pub enum DrainResources {
     /// Drain node with the given ID.
-    Node {
-        /// ID of the node.
-        id: NodeId,
-        /// Label of the drain
-        label: String,
-    },
+    Node(DrainNodeArgs),
+    //Node {
+    //    /// ID of the node.
+    //    id: NodeId,
+    //    /// Label of the drain
+    //    label: String,
+    //},
 }
 
 /// The types of resources that support the 'scale' operation.

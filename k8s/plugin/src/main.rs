@@ -109,8 +109,14 @@ async fn execute(cli_args: CliArgs) {
             }
         },
         Operations::Drain(resource) => match resource {
-            DrainResources::Node { id, label } => {
-                node::Node::drain(&id, label, &cli_args.output).await
+            DrainResources::Node(drain_node_args) => {
+                node::Node::drain(
+                    &drain_node_args.node_id(),
+                    drain_node_args.label(),
+                    drain_node_args.drain_timeout(),
+                    &cli_args.output,
+                )
+                .await
             }
         },
         Operations::Scale(resource) => match resource {

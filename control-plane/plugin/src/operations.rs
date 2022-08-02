@@ -26,7 +26,12 @@ pub enum Operations {
 #[async_trait(?Send)]
 pub trait Drain {
     type ID;
-    async fn drain(id: &Self::ID, label: String, output: &utils::OutputFormat);
+    async fn drain(
+        id: &Self::ID,
+        label: String,
+        drain_timeout: Option<humantime::Duration>,
+        output: &utils::OutputFormat,
+    );
     async fn get_node_drain(id: &Self::ID, output: &utils::OutputFormat);
 }
 

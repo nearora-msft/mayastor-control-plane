@@ -60,9 +60,20 @@ async fn execute(cli_args: CliArgs) {
     // Perform the operations based on the subcommand, with proper output format.
     match &cli_args.operations {
         Operations::Drain(resource) => match resource {
-            DrainResources::Node { id, label } => {
-                node::Node::drain(id, label.to_string(), &cli_args.output).await
+            DrainResources::Node (drain_node_args) => {
+                node::Node::drain(
+                    &drain_node_args.node_id(),
+                    drain_node_args.label(),
+                    drain_node_args.drain_timeout(),
+                    &cli_args.output
+                ).await
             }
+                //    node::Node::drain(id, label.to_string(), &cli_args.output).await
+                //}
+            //DrainResources::Node { id, label } => {
+
+            //    node::Node::drain(id, label.to_string(), &cli_args.output).await
+            //}
         },
         Operations::Get(resource) => match resource {
             GetResources::Volumes => volume::Volumes::list(&cli_args.output).await,

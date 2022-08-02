@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use openapi::models::NodeSpec;
 use prettytable::{Cell, Row};
 use serde::Serialize;
+use std::time;
 use tokio::time::Duration;
 
 #[derive(Debug, Clone, clap::Args)]
@@ -320,10 +321,46 @@ impl GetHeaderRow for NodeDisplay {
     }
 }
 
+#[derive(Debug, Clone, clap::Args)]
+pub struct DrainNodeArgs {
+    /// Id of the node
+    node_id: NodeId,
+    /// Label of the drain
+    label: String,
+    #[clap(long)]
+    /// Timeout for the drain operation
+    drain_timeout: Option<humantime::Duration>,
+}
+
+impl DrainNodeArgs {
+    /// Return the node ID.
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.clone()
+    }
+    /// Return the drain label.
+    pub fn label(&self) -> String {
+        self.label.clone()
+    }
+    /// Return whether or not we should show the drain labels.
+    pub fn drain_timeout(&self) -> Option<humantime::Duration> {
+        self.drain_timeout
+    }
+}
+
 #[async_trait(?Send)]
 impl Drain for Node {
     type ID = NodeId;
-    async fn drain(id: &Self::ID, label: String, output: &utils::OutputFormat) {
+    async fn drain(
+        id: &Self::ID,
+        label: String,
+        drain_timeout: Option<humantime::Duration>,
+        output: &utils::OutputFormat,
+    ) {
+        let mut timeout_instant: Option<time::Instant> = None;
+        if let Some(dt) = drain_timeout {
+            //let duration: std::time::Duration = drain_timeout.unwrap().into();
+            timeout_instant = time::Instant::now().checked_add(dt.into());
+        }
         match RestClient::client()
             .nodes_api()
             .put_node_drain(id, &label)
@@ -353,10 +390,15 @@ impl Drain for Node {
                             break;
                         }
                     }
+                    if timeout_instant.is_some() && time::Instant::now() > timeout_instant.unwrap()
+                    {
+                        break;
+                    }
                     let sleep = Duration::from_secs(1);
                     tokio::time::sleep(sleep).await;
                 }
-                utils::print_table(output, node.into_body());
+                let node_display = NodeDisplay::new(node.into_body(), NodeDisplayFormat::Drain);
+                print_table(output, node_display);
             }
             Err(e) => {
                 println!("Failed to get node {}. Error {}", id, e)
