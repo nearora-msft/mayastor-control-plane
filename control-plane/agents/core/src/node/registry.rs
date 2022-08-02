@@ -18,26 +18,8 @@ impl Registry {
         let mut nodes_vec = vec![];
         for node in nodes.values() {
             let node_id = node.read().await.id().clone();
-            let cordoned_for_drain = self
-                .specs()
-                .get_node(&node_id)
-                .unwrap()
-                .cordoned_for_drain();
-            let nexuses = self.get_node_nexuses(&node_id).await;
-            let mut drain_state = DrainState::NotDraining;
-            println!("not draining?");
-            if cordoned_for_drain {
-                println!("cordoned");
-                if nexuses.unwrap().is_empty() {
-                    println!("drained");
-                    drain_state = DrainState::Drained;
-                } else {
-                    println!("draining");
-                    drain_state = DrainState::Draining;
-                }
-            }
             let mut copy_node_state = node.read().await.node_state().clone();
-            copy_node_state.drain_state = drain_state;
+            copy_node_state.drain_state = self.get_node_drain_state(&node_id).await;
             nodes_vec.push(copy_node_state.clone());
         }
         nodes_vec
@@ -66,7 +48,6 @@ impl Registry {
 
     /// Get node state by its `NodeId`
     pub(crate) async fn get_node_state(&self, node_id: &NodeId) -> Result<NodeState, SvcError> {
-        println!("get_node_state");
         match self.nodes().read().await.get(node_id).cloned() {
             None => {
                 if self.specs().get_node(node_id).is_ok() {
@@ -80,26 +61,26 @@ impl Registry {
                 }
             }
             Some(node) => {
-                let cordoned_for_drain =
-                    self.specs().get_node(node_id).unwrap().cordoned_for_drain();
-                let nexuses = self.get_node_nexuses(node_id).await;
-                let mut drain_state = DrainState::NotDraining;
-                println!("not draining?");
-                if cordoned_for_drain {
-                    println!("cordoned");
-                    if nexuses.unwrap().is_empty() {
-                        println!("drained");
-                        drain_state = DrainState::Drained;
-                    } else {
-                        println!("draining");
-                        drain_state = DrainState::Draining;
-                    }
-                }
                 let mut copy_node_state = node.read().await.node_state().clone();
-                copy_node_state.drain_state = drain_state;
+                copy_node_state.drain_state = self.get_node_drain_state(node_id).await;
                 Ok(copy_node_state)
             }
         }
+    }
+
+    // deduce the drain state from the presence of drain labels and nexus instances
+    async fn get_node_drain_state(&self, node_id: &NodeId) -> DrainState {
+        let cordoned_for_drain = self.specs().get_node(node_id).unwrap().cordoned_for_drain();
+        let mut drain_state = DrainState::NotDraining;
+        if cordoned_for_drain {
+            let nexuses = self.get_node_nexuses(node_id).await;
+            if nexuses.unwrap().is_empty() {
+                drain_state = DrainState::Drained;
+            } else {
+                drain_state = DrainState::Draining;
+            }
+        }
+        drain_state
     }
 
     /// Register new NodeSpec for the given `Register` Request
