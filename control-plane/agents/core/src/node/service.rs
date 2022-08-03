@@ -8,7 +8,7 @@ use common::{
     v0::msg_translation::IoEngineToAgent,
 };
 use common_lib::types::v0::transport::{
-    Deregister, DrainState, Filter, Node, NodeId, NodeState, NodeStatus, Register,
+    Deregister, DrainState, DrainStateEnum, Filter, Node, NodeId, NodeState, NodeStatus, Register,
 };
 
 use crate::core::wrapper::InternalOps;
@@ -109,6 +109,11 @@ impl NodeOperations for Service {
         let node = self.drain(id, label).await?;
         Ok(node)
     }
+
+    async fn get_drain(&self, id: NodeId) -> Result<DrainState, ReplyError> {
+        let node = self.get_drain(id).await?;
+        Ok(node)
+    }
 }
 
 #[tonic::async_trait]
@@ -191,7 +196,7 @@ impl Service {
             id: registration.id.clone(),
             grpc_endpoint: registration.grpc_endpoint.clone(),
             status: NodeStatus::Online,
-            drain_state: DrainState::NotDraining,
+            drain_state: DrainStateEnum::NotDraining,
         };
         println!("register_state");
         let nodes = self.registry.nodes();
@@ -360,5 +365,12 @@ impl Service {
             .await?;
         let state = self.registry.get_node_state(&id).await.ok();
         Ok(Node::new(id, Some(spec), state))
+    }
+
+    async fn get_drain(&self, id: NodeId) -> Result<DrainState, SvcError> {
+        println!("getting drain state");
+        let dse = self.registry.get_node_drain_state(&id).await;
+        let ds: DrainState = DrainState { drain_state: dse };
+        Ok(ds)
     }
 }

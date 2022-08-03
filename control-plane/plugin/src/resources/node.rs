@@ -406,7 +406,7 @@ impl Drain for Node {
         }
     }
 
-    async fn get_node_drain(id: &Self::ID, output: &OutputFormat) {
+    async fn get_node_with_drain_state(id: &Self::ID, output: &OutputFormat) {
         match RestClient::client().nodes_api().get_node(id).await {
             Ok(node) => {
                 let node_display = NodeDisplay::new(node.into_body(), NodeDisplayFormat::Drain);

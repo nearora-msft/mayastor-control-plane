@@ -44,6 +44,14 @@ impl apis::actix_server::Nodes for RestApi {
         let node = client().drain(id.into(), label).await?;
         Ok(node.into())
     }
+
+    async fn get_node_drain(
+        Path(id): Path<String>,
+    ) -> Result<models::DrainState, RestError<RestJsonError>> {
+        // calls into grpc client code here
+        let ds = client().get_drain(id.into()).await?;
+        Ok(ds.drain_state.into())
+    }
 }
 
 /// returns node from node option and returns an error on non existence

@@ -94,7 +94,7 @@ async fn execute(cli_args: CliArgs) {
                 if args.show_cordon_labels() {
                     node::Node::get_node_with_cordon_labels(&args.node_id(), &cli_args.output).await
                 } else if args.show_drain() {
-                    node::Node::get_node_drain(&args.node_id(), &cli_args.output).await
+                    node::Node::get_node_with_drain_state(&args.node_id(), &cli_args.output).await
                 } else {
                     node::Node::get(&args.node_id(), &cli_args.output).await
                 }

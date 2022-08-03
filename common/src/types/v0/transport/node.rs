@@ -106,7 +106,7 @@ impl Default for NodeStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, EnumString, ToString, Eq, PartialEq)]
-pub enum DrainState {
+pub enum DrainStateEnum {
     /// Node has no drain cordon labels
     NotDraining,
     /// Node is draining
@@ -114,7 +114,11 @@ pub enum DrainState {
     /// Node is drained
     Drained,
 }
-impl Default for DrainState {
+pub struct DrainState {
+    pub drain_state: DrainStateEnum,
+}
+
+impl Default for DrainStateEnum {
     fn default() -> Self {
         Self::NotDraining
     }
@@ -131,7 +135,7 @@ pub struct NodeState {
     /// deemed status of the node
     pub status: NodeStatus,
     /// drainstate
-    pub drain_state: DrainState,
+    pub drain_state: DrainStateEnum,
 }
 impl NodeState {
     /// Return a new `Self`
@@ -139,7 +143,7 @@ impl NodeState {
         id: NodeId,
         grpc_endpoint: String,
         status: NodeStatus,
-        drain_state: DrainState,
+        drain_state: DrainStateEnum,
     ) -> Self {
         Self {
             id,
@@ -161,7 +165,7 @@ impl NodeState {
         &self.status
     }
     /// Get the drain state
-    pub fn drain_state(&self) -> &DrainState {
+    pub fn drain_state(&self) -> &DrainStateEnum {
         &self.drain_state
     }
 }
@@ -190,12 +194,12 @@ impl From<NodeStatus> for models::NodeStatus {
     }
 }
 
-impl From<DrainState> for models::DrainState {
-    fn from(src: DrainState) -> Self {
+impl From<DrainStateEnum> for models::DrainState {
+    fn from(src: DrainStateEnum) -> Self {
         match src {
-            DrainState::NotDraining => Self::NotDraining,
-            DrainState::Draining => Self::Draining,
-            DrainState::Drained => Self::Drained,
+            DrainStateEnum::NotDraining => Self::NotDraining,
+            DrainStateEnum::Draining => Self::Draining,
+            DrainStateEnum::Drained => Self::Drained,
         }
     }
 }

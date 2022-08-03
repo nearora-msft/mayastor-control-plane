@@ -50,7 +50,7 @@ message NodeState {
   // deemed status of the node
   NodeStatus status = 3;
   // drain state
-  DrainState drain_state = 4;
+  DrainStateEnum drain_state = 4;
 }
 
 // Multiple nodes
@@ -70,14 +70,19 @@ enum NodeStatus {
   Offline = 2;
 }
 
-// Status of the Node
-enum DrainState {
+// Drain state of the Node
+enum DrainStateEnum {
     // Node has no drain labels
     NotDraining = 0;
     // Node has at least 1 drain label and at least 1 nexus
     Draining = 1;
     // Node has at least 1 drain label and no nexuses
     Drained = 2;
+}
+
+message DrainState {
+    // Drain state
+    DrainStateEnum drain_state = 1;
 }
 
 // Get storage nodes by filter
@@ -92,6 +97,20 @@ message GetNodesRequest {
 message GetNodesReply {
   oneof reply {
     Nodes nodes = 1;
+    common.ReplyError error = 2;
+  }
+}
+
+// Get drain stet on node
+message GetDrainRequest {
+  // Node identification
+  string node_id = 1;
+}
+
+// Reponse to the GetDrain request
+message GetDrainReply {
+  oneof reply {
+    DrainState drain_state = 1;
     common.ReplyError error = 2;
   }
 }
@@ -153,4 +172,5 @@ service NodeGrpc {
   rpc CordonNode (CordonNodeRequest) returns (CordonNodeReply) {}
   rpc UncordonNode (UncordonNodeRequest) returns (UncordonNodeReply) {}
   rpc DrainNode (DrainNodeRequest) returns (DrainNodeReply) {}
+  rpc GetDrain (GetDrainRequest) returns (GetDrainReply) {}
 }

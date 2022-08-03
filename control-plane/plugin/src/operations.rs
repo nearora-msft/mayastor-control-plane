@@ -32,7 +32,7 @@ pub trait Drain {
         drain_timeout: Option<humantime::Duration>,
         output: &utils::OutputFormat,
     );
-    async fn get_node_drain(id: &Self::ID, output: &utils::OutputFormat);
+    async fn get_node_with_drain_state(id: &Self::ID, output: &utils::OutputFormat);
 }
 
 // Drain trait.

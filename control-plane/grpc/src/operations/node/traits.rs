@@ -13,8 +13,8 @@ use common_lib::{
     types::v0::{
         store::node::NodeSpec,
         transport::{
-            BlockDevice, DrainState, Filesystem, Filter, GetBlockDevices, Node, NodeId, NodeState,
-            NodeStatus, Partition,
+            BlockDevice, DrainState, DrainStateEnum, Filesystem, Filter, GetBlockDevices, Node,
+            NodeId, NodeState, NodeStatus, Partition,
         },
     },
 };
@@ -39,6 +39,8 @@ pub trait NodeOperations: Send + Sync {
     async fn uncordon(&self, id: NodeId, label: String) -> Result<Node, ReplyError>;
     /// Drain the node with the given ID and associate the label with the draining node.
     async fn drain(&self, id: NodeId, label: String) -> Result<Node, ReplyError>;
+    /// Get the node drain state.
+    async fn get_drain(&self, id: NodeId) -> Result<DrainState, ReplyError>;
 }
 
 impl TryFrom<node::Node> for Node {
@@ -65,16 +67,17 @@ impl TryFrom<node::Node> for Node {
                         ))
                     }
                 };
-                let drain_state: DrainState = match node::DrainState::from_i32(state.drain_state) {
-                    Some(drain_state) => drain_state.into(),
-                    None => {
-                        return Err(ReplyError::invalid_argument(
-                            ResourceKind::Node,
-                            "node.state.drain_state",
-                            "".to_string(),
-                        ))
-                    }
-                };
+                let drain_state: DrainStateEnum =
+                    match node::DrainStateEnum::from_i32(state.drain_state) {
+                        Some(drain_state) => drain_state.into(),
+                        None => {
+                            return Err(ReplyError::invalid_argument(
+                                ResourceKind::Node,
+                                "node.state.drain_state",
+                                "".to_string(),
+                            ))
+                        }
+                    };
                 Some(NodeState::new(
                     state.node_id.into(),
                     state.endpoint,
@@ -111,7 +114,7 @@ impl From<Node> for node::Node {
             None => None,
             Some(state) => {
                 let status: node::NodeStatus = state.status.clone().into();
-                let drain_state: node::DrainState = state.drain_state.clone().into();
+                let drain_state: node::DrainStateEnum = state.drain_state.clone().into();
                 // get drain_state here
                 Some(node::NodeState {
                     node_id: state.id.to_string(),
@@ -182,26 +185,41 @@ impl From<NodeStatus> for node::NodeStatus {
     }
 }
 
+impl From<node::DrainStateEnum> for DrainStateEnum {
+    fn from(src: node::DrainStateEnum) -> Self {
+        match src {
+            node::DrainStateEnum::NotDraining => Self::NotDraining,
+            node::DrainStateEnum::Draining => Self::Draining,
+            node::DrainStateEnum::Drained => Self::Drained,
+        }
+    }
+}
+
+impl From<DrainStateEnum> for node::DrainStateEnum {
+    fn from(src: DrainStateEnum) -> Self {
+        match src {
+            DrainStateEnum::NotDraining => Self::NotDraining,
+            DrainStateEnum::Draining => Self::Draining,
+            DrainStateEnum::Drained => Self::Drained,
+        }
+    }
+}
 impl From<node::DrainState> for DrainState {
     fn from(src: node::DrainState) -> Self {
-        match src {
-            node::DrainState::NotDraining => Self::NotDraining,
-            node::DrainState::Draining => Self::Draining,
-            node::DrainState::Drained => Self::Drained,
+        DrainState {
+            drain_state: src.drain_state().into(),
         }
     }
 }
 
 impl From<DrainState> for node::DrainState {
     fn from(src: DrainState) -> Self {
-        match src {
-            DrainState::NotDraining => Self::NotDraining,
-            DrainState::Draining => Self::Draining,
-            DrainState::Drained => Self::Drained,
+        let drain_state: node::DrainStateEnum = src.drain_state.into();
+        node::DrainState {
+            drain_state: drain_state.into(),
         }
     }
 }
-
 /// GetBlockDeviceInfo trait for the getblockdevices
 /// operation
 pub trait GetBlockDeviceInfo: Send + Sync {

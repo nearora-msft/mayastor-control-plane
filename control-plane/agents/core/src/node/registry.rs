@@ -1,6 +1,6 @@
 use crate::core::{registry::Registry, wrapper::NodeWrapper};
 use common::errors::SvcError;
-use common_lib::types::v0::transport::{DrainState, NodeId, NodeState, Register};
+use common_lib::types::v0::transport::{DrainStateEnum, NodeId, NodeState, Register};
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -69,15 +69,15 @@ impl Registry {
     }
 
     // deduce the drain state from the presence of drain labels and nexus instances
-    async fn get_node_drain_state(&self, node_id: &NodeId) -> DrainState {
+    pub(crate) async fn get_node_drain_state(&self, node_id: &NodeId) -> DrainStateEnum {
         let cordoned_for_drain = self.specs().get_node(node_id).unwrap().cordoned_for_drain();
-        let mut drain_state = DrainState::NotDraining;
+        let mut drain_state = DrainStateEnum::NotDraining;
         if cordoned_for_drain {
             let nexuses = self.get_node_nexuses(node_id).await;
             if nexuses.unwrap().is_empty() {
-                drain_state = DrainState::Drained;
+                drain_state = DrainStateEnum::Drained;
             } else {
-                drain_state = DrainState::Draining;
+                drain_state = DrainStateEnum::Draining;
             }
         }
         drain_state
