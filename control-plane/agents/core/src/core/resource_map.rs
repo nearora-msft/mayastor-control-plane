@@ -57,7 +57,7 @@ where
 
     /// Get all the resources as a vector.
     pub fn to_vec(&self) -> Vec<Arc<Mutex<S>>> {
-        self.map.values().cloned().collect()
+        self.map.values().cloned().collect::<Vec<_>>()
     }
 
     /// Return the maps values.

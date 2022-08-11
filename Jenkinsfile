@@ -87,7 +87,7 @@ pipeline {
         not {
           anyOf {
             branch 'master'
-            branch 'release-*'
+            branch 'release/*'
             branch 'hotfix-*'
             expression { run_linter == false }
           }
@@ -172,6 +172,7 @@ pipeline {
           anyOf {
             branch 'master'
             branch 'release-*'
+            branch 'release/*'
             branch 'hotfix-*'
             branch 'develop'
           }
