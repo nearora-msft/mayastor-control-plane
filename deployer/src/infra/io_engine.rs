@@ -35,7 +35,7 @@ impl ComponentAction for IoEngine {
             .with_bind("/tmp", "/host/tmp");
 
             if options.io_engine_isolate {
-                spec = spec.with_args(vec!["-l", format!("{}", i).as_str()]);
+                spec = spec.with_args(vec!["-l", format!("{},{}", i * 2, (i * 2) + 1).as_str()]);
             }
 
             if let Some(env) = &options.io_engine_env {

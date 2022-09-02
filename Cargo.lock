@@ -1914,6 +1914,7 @@ version = "1.0.0"
 dependencies = [
  "common-lib",
  "deployer-cluster",
+ "futures",
  "grpc",
  "openapi",
  "rpc",

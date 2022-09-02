@@ -1,7 +1,8 @@
 use common_lib::types::v0::transport as v0;
 use deployer_cluster::{result_either, test_result_grpc, Cluster, ClusterBuilder};
 use grpc::operations::nexus::traits::NexusOperations;
-use openapi::models;
+use openapi::{apis::Uuid, models};
+use std::sync::{Arc, Mutex};
 
 #[tokio::test]
 async fn create_nexus_malloc() {
@@ -228,4 +229,159 @@ async fn create_nexus_replica_not_available() {
         )
         .await
         .expect_err("One replica is not present so nexus shouldn't be created");
+}
+
+#[tokio::test]
+async fn kato() {
+    let cluster = ClusterBuilder::builder()
+        .with_rest(true)
+        .with_agents(vec!["core"])
+        .with_io_engines(2)
+        .with_options(|o| {
+            o.with_isolated_io_engine(true)
+                .with_io_engine_env("NVME_KATO_MS", "10000")
+                .with_io_engine_env("NVME_TIMEOUT_US", 200_000.to_string().as_str())
+                .with_io_engine_env("NVME_TIMEOUT_ADMIN_US", 10_000_000.to_string().as_str())
+        })
+        .with_pools(1)
+        .with_cache_period("500ms")
+        .build()
+        .await
+        .unwrap();
+
+    let api = cluster.rest_v00();
+    let node_id = cluster.node(0);
+    let volumes_api = api.volumes_api();
+    let volume = volumes_api
+        .put_volume(
+            &Uuid::new_v4(),
+            models::CreateVolumeBody::new(models::VolumePolicy::new(false), 2, 5242880u64, true),
+        )
+        .await
+        .unwrap();
+
+    let volume = volumes_api
+        .put_volume_target(
+            &volume.spec.uuid,
+            models::VolumeShareProtocol::Nvmf,
+            Some(node_id.as_str()),
+        )
+        .await
+        .unwrap();
+
+    let mut rpc = cluster.grpc_handle(cluster.node(0).as_str()).await.unwrap();
+    cluster
+        .composer()
+        .pause(cluster.node(1).as_str())
+        .await
+        .unwrap();
+
+    let start = std::time::Instant::now();
+    loop {
+        let nexuses = rpc
+            .io_engine
+            .list_nexus(rpc::io_engine::Null {})
+            .await
+            .unwrap()
+            .into_inner();
+        let nexus = nexuses.nexus_list.first().unwrap();
+        assert_eq!(nexus.children.len(), 2);
+        if nexus.state != rpc::io_engine::NexusState::NexusOnline as i32 {
+            println!("Took {:?} to fault", start.elapsed());
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+    }
+
+    volumes_api.del_volume(&volume.spec.uuid).await.unwrap();
+}
+
+#[tokio::test]
+async fn hammer() {
+    let cluster = ClusterBuilder::builder()
+        .with_rest(true)
+        .with_agents(vec!["core"])
+        .with_io_engines(3)
+        .with_options(|o| {
+            o.with_isolated_io_engine(true)
+                .with_io_engine_devices(vec![
+                    "/dev/sdavg/lvol0",
+                    "/dev/sdavg/lvol1",
+                    "/dev/sdavg/lvol2",
+                ])
+                .with_io_engine_env("NVME_KATO_MS", "100")
+                .with_io_engine_env("NVME_TIMEOUT_US", 200_000.to_string().as_str())
+        })
+        .with_pool(0, "/dev/sdavg/lvol0")
+        .with_pool(1, "/dev/sdavg/lvol1")
+        .with_pool(2, "/dev/sdavg/lvol2")
+        .with_cache_period("500ms")
+        .build()
+        .await
+        .unwrap();
+
+    let mut tasks = vec![];
+
+    for node in 0 .. 3 {
+        let api = cluster.rest_v00();
+        let node_id = cluster.node(node);
+        tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+        let handle = tokio::spawn(async move {
+            let volumes_api = api.volumes_api();
+
+            for _ in 0 .. 1000 {
+                let volumes = Arc::new(Mutex::new(Vec::with_capacity(100)));
+                let mut handles = vec![];
+                for _ in 0 .. 10 {
+                    let api = api.clone();
+                    let node_id = node_id.clone();
+                    let volumes = volumes.clone();
+                    let handle = tokio::spawn(async move {
+                        let volumes_api = api.volumes_api();
+                        for _ in 0 .. 10 {
+                            let volume = volumes_api
+                                .put_volume(
+                                    &Uuid::new_v4(),
+                                    models::CreateVolumeBody::new(
+                                        models::VolumePolicy::new(false),
+                                        3,
+                                        5242880u64,
+                                        true,
+                                    ),
+                                )
+                                .await
+                                .unwrap();
+
+                            let volume = volumes_api
+                                .put_volume_target(
+                                    &volume.spec.uuid,
+                                    models::VolumeShareProtocol::Nvmf,
+                                    Some(node_id.as_str()),
+                                )
+                                .await
+                                .unwrap();
+                            volumes.lock().unwrap().push(volume);
+                        }
+                    });
+                    handles.push(handle);
+                }
+
+                futures::future::try_join_all(handles).await.unwrap();
+
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
+                let volumes = volumes.lock().unwrap().clone();
+                for volume in volumes {
+                    volumes_api
+                        .del_volume_target(&volume.spec.uuid, Some(false))
+                        .await
+                        .unwrap();
+                    volumes_api.del_volume(&volume.spec.uuid).await.unwrap();
+                }
+            }
+        });
+        tasks.push(handle);
+    }
+
+    futures::future::try_join_all(tasks).await.unwrap();
 }
