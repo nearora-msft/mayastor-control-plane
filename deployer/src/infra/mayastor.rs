@@ -38,6 +38,12 @@ impl ComponentAction for Mayastor {
 
             if options.developer_delayed {
                 spec = spec.with_env("DEVELOPER_DELAYED", "1");
+            } else {
+                let core = 0;
+                spec = spec.with_args(vec![
+                    "-l",
+                    format!("{},{}", core + (i * 2), (i * 2) + 1 + core).as_str(),
+                ]);
             }
 
             if !options.no_etcd {
