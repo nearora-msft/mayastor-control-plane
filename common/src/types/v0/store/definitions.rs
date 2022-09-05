@@ -176,17 +176,10 @@ pub fn key_prefix() -> String {
 /// Returns the key prefix that is used for the keys.
 /// The platform info and namespace where the product is running must be specified.
 pub fn build_key_prefix(
-    cluster_uid: &dyn crate::platform::PlatformInfo,
+    _cluster_uid: &dyn crate::platform::PlatformInfo,
     namespace: String,
 ) -> String {
-    let api_version = 0;
-    format!(
-        "{}/apis/v{}/clusters/{}/namespaces/{}",
-        crate::ETCD_KEY_PREFIX,
-        api_version,
-        cluster_uid.uid(),
-        namespace
-    )
+    format!("/namespace/{}/control-plane", namespace)
 }
 /// Returns the control plane prefix that should be used for the keys, in conjunction
 /// with a `StorableObjectType` type.

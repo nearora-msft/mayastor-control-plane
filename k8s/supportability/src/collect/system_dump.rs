@@ -207,7 +207,7 @@ impl SystemDumper {
                 });
         }
 
-        let _ = write_to_log_file(format!(
+        log(format!(
             "Collecting logs of following services: \n {:#?}",
             resources
         ));

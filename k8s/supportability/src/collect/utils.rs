@@ -15,10 +15,10 @@ pub fn log(content: String) {
 
 /// Method to be only used to write in file
 pub(crate) fn write_to_log_file(content: String) -> Result<(), std::io::Error> {
-    TOOL_LOG_FILE
-        .get()
-        .expect("TOOL_LOG_FILE should have been initialised")
-        .write_all(content.as_bytes())?;
+    if let Some(mut log) = TOOL_LOG_FILE.get() {
+        log.write_all(content.as_bytes())?;
+    }
+
     Ok(())
 }
 

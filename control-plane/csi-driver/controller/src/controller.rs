@@ -114,10 +114,12 @@ fn check_existing_volume(
         )));
     }
 
-    if spec.thin != thin {
+    if spec.thin.unwrap_or_default() != thin {
         return Err(Status::already_exists(format!(
             "Existing volume {} has thin provisioning set to {} ({} requested)",
-            spec.uuid, spec.thin, thin
+            spec.uuid,
+            spec.thin.unwrap_or_default(),
+            thin
         )));
     }
 
@@ -554,12 +556,11 @@ impl rpc::csi::controller_server::Controller for CsiControllerSvc {
         let vt_mapper = VolumeTopologyMapper::init().await?;
 
         let volumes = IoEngineApiClient::get_client()
-            .list_volumes(max_entries, args.starting_token)
+            .list_volumes(0, args.starting_token)
             .await
             .map_err(|e| Status::internal(format!("Failed to list volumes, error = {:?}", e)))?;
 
         let entries = volumes
-            .entries
             .into_iter()
             .map(|v| {
                 let volume = rpc::csi::Volume {
@@ -581,7 +582,7 @@ impl rpc::csi::controller_server::Controller for CsiControllerSvc {
 
         Ok(Response::new(ListVolumesResponse {
             entries,
-            next_token: volumes.next_token.map_or("".to_string(), |v| v.to_string()),
+            next_token: "".to_string(),
         }))
     }
 

@@ -21,7 +21,7 @@ lazy_static! {
 }
 
 /// K8s label to identify io daemon service
-pub(crate) const MAYASTOR_DAEMONSET_LABEL: &str = "app=io-engine";
+pub(crate) const MAYASTOR_DAEMONSET_LABEL: &str = "app=mayastor";
 
 /// ResourceInformation holds fields to identify appropriate mayastor service
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]

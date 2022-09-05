@@ -126,22 +126,12 @@ impl VolumeClientWrapper {
     }
 
     async fn list_volumes(&self) -> Result<Vec<Volume>, ResourceError> {
-        let mut volumes: Vec<Volume> = Vec::new();
-        let mut next_token: Option<isize> = Some(0);
-        let max_entries: isize = utils::MAX_RESOURCE_ENTRIES;
-        loop {
-            let volumes_api_resp = self
-                .rest_client
-                .volumes_api()
-                .get_volumes(max_entries, next_token)
-                .await?
-                .into_body();
-            volumes.extend(volumes_api_resp.entries);
-            if volumes_api_resp.next_token.is_none() {
-                break;
-            }
-            next_token = volumes_api_resp.next_token;
-        }
+        let volumes = self
+            .rest_client
+            .volumes_api()
+            .get_volumes(0, None)
+            .await?
+            .into_body();
         Ok(volumes)
     }
 

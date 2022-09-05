@@ -4,9 +4,10 @@ use common_lib::types::v0::openapi::{
     clients::tower::StatusCode,
     models::{
         CreateVolumeBody, Node, NodeTopology, Pool, PoolTopology, RestJsonError, Topology, Volume,
-        VolumePolicy, VolumeShareProtocol, Volumes,
+        VolumePolicy, VolumeShareProtocol,
     },
 };
+type Volumes = Vec<Volume>;
 
 use anyhow::{anyhow, Result};
 use once_cell::sync::OnceCell;

@@ -1299,7 +1299,9 @@ paths:
           content:
             application/json:
               schema:
-               $ref: '#/components/schemas/Volumes'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Volume'
         '4XX':
           $ref: '#/components/responses/ClientError'
         '5XX':
@@ -2616,7 +2618,6 @@ components:
         - status
         - uuid
         - policy
-        - thin
     VolumeTarget:
       example:
         node: io-engine-1
@@ -2733,19 +2734,6 @@ components:
         - uuid
         - status
         - replica_topology
-    Volumes:
-      description: |-
-        Array of volumes plus the next token for subsequent get requests when using pagination
-      type: object
-      properties:
-        entries:
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume'
-        next_token:
-          type: integer
-      required:
-        - entries
     Volume:
       description: |-
         Volumes

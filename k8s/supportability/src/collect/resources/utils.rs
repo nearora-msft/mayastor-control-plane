@@ -7,9 +7,6 @@ use prettytable::{format, Row, Table};
 use serde::{ser, Serialize};
 use std::{collections::HashSet, io};
 
-/// Defines maximum entries REST service can fetch at one network call
-pub(crate) const MAX_RESOURCE_ENTRIES: isize = 200;
-
 // Constants to store the table headers of the Tabular output formats.
 lazy_static! {
     /// Represents list of Volume table headers

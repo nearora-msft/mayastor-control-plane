@@ -67,7 +67,7 @@ impl apis::actix_server::Volumes for RestApi {
 
     async fn get_volumes(
         Query((max_entries, starting_token)): Query<(isize, Option<isize>)>,
-    ) -> Result<models::Volumes, RestError<RestJsonError>> {
+    ) -> Result<Vec<models::Volume>, RestError<RestJsonError>> {
         let starting_token = starting_token.unwrap_or_default();
 
         // If max entries is 0, pagination is disabled. All volumes will be returned in a single
@@ -81,10 +81,7 @@ impl apis::actix_server::Volumes for RestApi {
             None
         };
         let volumes = client().get(Filter::None, pagination, None).await?;
-        Ok(models::Volumes {
-            entries: volumes.entries.into_iter().map(|e| e.into()).collect(),
-            next_token: volumes.next_token.map(|t| t as isize),
-        })
+        Ok(volumes.entries.into_vec())
     }
 
     async fn put_volume(

@@ -31,12 +31,12 @@ pub const CREATED_BY_KEY: &str = "openebs.io/created-by";
 pub const DSP_OPERATOR: &str = "operator-diskpool";
 
 /// The service label for the api-rest service.
-pub const API_REST_LABEL: &str = "app=api-rest";
+pub const API_REST_LABEL: &str = "app=rest";
 /// The service port for the api-rest label for the etcd pods.
 pub const API_REST_HTTP_PORT: &str = "http";
 
 /// The pod label for the etcd pods.
-pub const ETCD_LABEL: &str = "app=etcd";
+pub const ETCD_LABEL: &str = "app.kubernetes.io/name=etcd";
 /// The port for the etcd pods.
 pub const ETCD_PORT: &str = "client";
 

@@ -89,7 +89,7 @@ impl PvGarbageCollector {
             .await
         {
             Ok(volume_list) => {
-                for vol in volume_list.entries {
+                for vol in volume_list {
                     let pv = "pvc-".to_string() + &vol.spec.uuid.to_string();
                     if let Ok(pvol) = self.pv_handle.get_opt(&pv).await {
                         match pvol {

@@ -12,7 +12,6 @@ use crate::{
     },
     log, OutputFormat,
 };
-use futures::future;
 use std::{path::PathBuf, process};
 
 /// Dumper interacts with various services to collect information like mayastor resource(s),
@@ -200,23 +199,6 @@ impl ResourceDumper {
 
         let mut path: PathBuf = std::path::PathBuf::new();
         path.push(&self.dir_path.clone());
-
-        // Collect ETCD dump specific to mayastor
-        log("Collecting mayastor specific information from Etcd...".to_string());
-        let _ = future::try_join_all(
-            self.etcd_dumper
-                .as_mut()
-                .map(|etcd_store| etcd_store.dump(path, false)),
-        )
-        .await
-        .map_err(|e| {
-            log(format!(
-                "Failed to collect etcd dump information, error: {:?}",
-                e
-            ));
-            errors.push(Error::EtcdDumpError(e));
-        });
-        log("Completed collection of mayastor specific resources from Etcd service".to_string());
 
         let _ = self
             .archive
