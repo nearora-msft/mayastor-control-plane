@@ -118,7 +118,7 @@ impl CsiNode {
     }
     fn with_node(container_name: &str, node_name: &str, socket: &str, cfg: Builder) -> Builder {
         let binary = Binary::from_dbg(CSI_NODE)
-            .with_args(vec!["--nvme-nr-io-queues", "1"])
+            .with_args(vec!["--nvme-nr-io-queues", "2"])
             .with_args(vec!["--node-name", node_name])
             // Make sure that CSI socket is always under shared directory
             // regardless of what its default value is.
@@ -132,7 +132,7 @@ impl CsiNode {
         cfg.add_container_spec(
             ContainerSpec::from_binary(container_name, binary)
                 .with_bypass_default_mounts(true)
-                .with_bind("/var/tmp", "/var/tmp")
+                .with_bind("/var/tmp", "/var/tmp:shared")
                 .with_bind("/dev", "/dev:ro")
                 .with_bind("/run/udev", "/run/udev:ro")
                 .with_env("PATH", path.as_str())

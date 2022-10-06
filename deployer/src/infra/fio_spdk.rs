@@ -10,6 +10,11 @@ impl ComponentAction for FioSpdk {
             cfg.add_container_spec(
                 ContainerSpec::from_image("fio-spdk", utils::FIO_SPDK_IMAGE)
                     .with_entrypoint("sleep")
+                    .with_bypass_default_mounts(true)
+                    .with_bind("/var/run/dpdk", "/var/run/dpdk")
+                    .with_bind("/var/tmp/", "/var/tmp/:shared")
+                    .with_bind("/dev", "/dev:ro")
+                    .with_privileged(Some(true))
                     .with_arg("infinity"),
             )
         } else {

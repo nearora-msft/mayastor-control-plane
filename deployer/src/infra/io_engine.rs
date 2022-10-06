@@ -28,6 +28,7 @@ impl ComponentAction for IoEngine {
             .with_args(vec!["-N", &name])
             .with_args(vec!["-g", &io_engine_socket])
             .with_args(vec!["-R", DEFAULT_GRPC_CLIENT_ADDR])
+            //.with_arg("--reactor-freeze-detection")
             .with_args(vec![
                 "--api-versions".to_string(),
                 IoEngineApiVersion::vec_to_str(options.io_engine_api_versions.clone()),
@@ -40,7 +41,8 @@ impl ComponentAction for IoEngine {
             .with_bind("/tmp", "/host/tmp");
 
             if options.io_engine_isolate {
-                spec = spec.with_args(vec!["-l", format!("{}", i).as_str()]);
+                let i = i * 2;
+                spec = spec.with_args(vec!["-l", format!("{},{}", i, i + 1).as_str()]);
             }
 
             if let Some(env) = &options.io_engine_env {

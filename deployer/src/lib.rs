@@ -422,6 +422,11 @@ impl StartOptions {
         self
     }
     #[must_use]
+    pub fn with_io_engine_api(mut self, versions: Vec<IoEngineApiVersion>) -> Self {
+        self.io_engine_api_versions = versions;
+        self
+    }
+    #[must_use]
     pub fn with_show_info(mut self, show_info: bool) -> Self {
         self.show_info = show_info;
         self
