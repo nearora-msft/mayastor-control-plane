@@ -1,11 +1,33 @@
 use actix_web::{dev::Handler, web, Error, HttpResponse};
 use futures::future::{ok as fut_ok, Ready};
+use openapiv3::{OpenAPI, PathItem};
+use serde_json::{self, Value};
 use tinytemplate::TinyTemplate;
 
 async fn get_v0_spec() -> HttpResponse {
     let spec_str = include_str!("../../../openapi-specs/v0_api_spec.yaml");
-    match serde_yaml::from_str::<serde_json::Value>(spec_str) {
-        Ok(value) => HttpResponse::Ok().json(value),
+    match serde_yaml::from_str::<OpenAPI>(spec_str) {
+        Ok(mut openapi) => {
+            openapi.paths.paths = openapi
+                .paths
+                .paths
+                .into_iter()
+                .filter(|(_, value)| {
+                    if let Some(value) = value.as_item() {
+                        if value.extensions.get("x-api-scope").is_none() {
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                })
+                .collect();
+
+
+            HttpResponse::Ok().json(openapi)
+        }
         Err(error) => HttpResponse::InternalServerError()
             .json(serde_json::json!({ "error": error.to_string() })),
     }
@@ -53,3 +75,14 @@ impl Handler<()> for GetSwaggerUi {
         }
     }
 }
+
+// fn remove_internal_scoped_components(map: &Map<String, Value>) -> Map<String, Value> {
+//     let mut altered_map: Map<String, Value> = Map::new();
+//     for (k, y) in map {
+//         if y.get("x-api-scope").is_none() || y.get("x-api-scope") !=
+// Some(&Value::from("internal"))         {
+//             altered_map.insert(k.clone(), y.clone());
+//         }
+//     }
+//     altered_map
+// }

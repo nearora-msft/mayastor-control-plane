@@ -6,6 +6,7 @@ servers:
   - url: /v0
 paths:
   /nexuses:
+    x-api-scope: internal
     get:
       tags:
         - Nexuses
@@ -26,6 +27,7 @@ paths:
       security:
         - JWT: []
   '/nexuses/{nexus_id}':
+    x-api-scope: internal
     get:
       tags:
         - Nexuses
@@ -71,6 +73,7 @@ paths:
       security:
         - JWT: []
   '/nexuses/{nexus_id}/children':
+    x-api-scope: internal
     get:
       tags:
         - Children
@@ -98,6 +101,7 @@ paths:
       security:
         - JWT: []
   '/nexuses/{nexus_id}/children/{child_id}':
+    x-api-scope: internal
     get:
       tags:
         - Children
@@ -229,6 +233,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{id}/cordon/{label}':
+    x-api-scope: internal
     put:
       tags:
         - Nodes
@@ -286,6 +291,7 @@ paths:
       security:
         - JWT: [ ]
   '/nodes/{id}/drain/{label}':
+    x-api-scope: internal
     put:
       tags:
         - Nodes
@@ -315,6 +321,7 @@ paths:
       security:
         - JWT: [ ]
   '/nodes/{id}/nexuses':
+    x-api-scope: internal
     get:
       tags:
         - Nexuses
@@ -393,6 +400,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/nexuses/{nexus_id}':
+    x-api-scope: internal
     get:
       tags:
         - Nexuses
@@ -483,6 +491,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/nexuses/{nexus_id}/children':
+    x-api-scope: internal
     get:
       tags:
         - Children
@@ -515,6 +524,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/nexuses/{nexus_id}/children/{child_id}':
+    x-api-scope: internal
     get:
       tags:
         - Children
@@ -617,6 +627,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/nexuses/{nexus_id}/share':
+    x-api-scope: internal
     delete:
       tags:
         - Nexuses
@@ -643,6 +654,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/nexuses/{nexus_id}/share/{protocol}':
+    x-api-scope: internal
     put:
       tags:
         - Nexuses
@@ -796,6 +808,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/pools/{pool_id}/replicas/{replica_id}':
+    x-api-scope: internal
     get:
       tags:
         - Replicas
@@ -901,6 +914,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/pools/{pool_id}/replicas/{replica_id}/share':
+    x-api-scope: internal
     delete:
       tags:
         - Replicas
@@ -932,6 +946,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node_id}/pools/{pool_id}/replicas/{replica_id}/share/nvmf':
+    x-api-scope: internal
     put:
       tags:
         - Replicas
@@ -998,6 +1013,7 @@ paths:
       security:
         - JWT: []
   '/nodes/{node}/jsongrpc/{method}':
+    x-api-scope: internal
     put:
       tags:
         - JsonGrpc
@@ -1033,7 +1049,9 @@ paths:
       security:
         - JWT: []
   /pools:
+
     get:
+
       tags:
         - Pools
       operationId: get_pools
@@ -1096,6 +1114,7 @@ paths:
       security:
         - JWT: []
   '/pools/{pool_id}/replicas/{replica_id}':
+    x-api-scope: internal
     put:
       tags:
         - Replicas
@@ -1157,6 +1176,7 @@ paths:
       security:
         - JWT: []
   '/pools/{pool_id}/replicas/{replica_id}/share':
+    x-api-scope: internal
     delete:
       tags:
         - Replicas
@@ -1183,6 +1203,7 @@ paths:
       security:
         - JWT: []
   '/pools/{pool_id}/replicas/{replica_id}/share/nvmf':
+    x-api-scope: internal
     put:
       tags:
         - Replicas
@@ -1258,6 +1279,7 @@ paths:
       security:
         - JWT: []
   /specs:
+    x-api-scope: internal
     get:
       tags:
         - Specs
@@ -1439,12 +1461,12 @@ paths:
             $ref: '#/components/schemas/VolumeShareProtocol'
         - in: query
           name: republish
-          x-api-scope: internal
           description: |-
             Allows republishing the volume on the node by shutting down the existing target first.
           required: false
           schema:
             type: boolean
+          x-api-scope: internal
       responses:
         '200':
           description: OK
@@ -1490,6 +1512,7 @@ paths:
       security:
         - JWT: [ ]
   '/volumes/{volume_id}/shutdown_targets':
+    x-api-scope: internal
     delete:
       tags:
         - Volumes
@@ -1510,6 +1533,7 @@ paths:
       security:
         - JWT: []
   '/volumes/{volume_id}/share/{protocol}':
+    x-api-scope: internal
     put:
       tags:
         - Volumes
@@ -1539,6 +1563,7 @@ paths:
       security:
         - JWT: []
   '/volumes{volume_id}/share':
+    x-api-scope: internal
     delete:
       tags:
         - Volumes
@@ -1559,6 +1584,7 @@ paths:
       security:
         - JWT: []
   '/watches/volumes/{volume_id}':
+    x-api-scope: internal
     get:
       tags:
         - Watches
