@@ -599,3 +599,21 @@ impl DestroyShutdownTargets {
         DestroyShutdownTargets { uuid }
     }
 }
+
+impl From<NvmfParameters> for models::NvmfParameters {
+    fn from(src: NvmfParameters) -> Self {
+        Self{
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout
+        }
+    }
+}
+
+impl From<models::NvmfParameters> for NvmfParameters {
+    fn from(src: models::NvmfParameters) -> Self {
+        Self{
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout
+        }
+    }
+}

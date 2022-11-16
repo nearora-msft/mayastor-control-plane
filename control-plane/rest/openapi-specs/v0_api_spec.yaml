@@ -2052,6 +2052,9 @@ components:
         size: 10485761
         thin: false
         topology: null
+        nvmf_parameters:
+          io_timeout: 30
+          ctlr_loss_timeout: 1980
       description: Create Volume Body JSON
       type: object
       properties:

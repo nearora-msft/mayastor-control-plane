@@ -3,11 +3,13 @@ use crate::{
     ha_cluster_agent::{
         FailedNvmePath, HaNodeInfo, ReplacePathRequest, ReportFailedNvmePathsRequest,
     },
+    misc::traits::ValidateRequestTypes,
 };
 use common_lib::{
     transport_api::{ReplyError, ResourceKind},
-    types::v0::transport::{
-        cluster_agent::NodeAgentInfo, FailedPath, ReplacePath, ReportFailedPaths,
+    types::v0::{
+        store::volume::NvmfParameters,
+        transport::{cluster_agent::NodeAgentInfo, FailedPath, ReplacePath, ReportFailedPaths},
     },
     IntoVec,
 };
@@ -31,6 +33,8 @@ pub trait ReplacePathInfo: Send + Sync + std::fmt::Debug {
     fn target_nqn(&self) -> String;
     /// URI of the new path
     fn new_path(&self) -> String;
+    ///
+    fn nvmf_parameters(&self) -> NvmfParameters;
 }
 
 impl ReplacePathInfo for ReplacePath {
@@ -41,14 +45,49 @@ impl ReplacePathInfo for ReplacePath {
     fn new_path(&self) -> String {
         self.new_path().to_string()
     }
+
+    fn nvmf_parameters(&self) -> NvmfParameters {
+        self.nvmf_parameters()
+    }
 }
 
-impl ReplacePathInfo for ReplacePathRequest {
+/// Intermediate type for request validation.
+#[derive(Debug)]
+pub struct ValidatedReplacePathRequest {
+    inner: ReplacePathRequest,
+    nvmf_parameters: NvmfParameters,
+}
+
+impl ReplacePathInfo for ValidatedReplacePathRequest {
     fn target_nqn(&self) -> String {
-        self.target_nqn.clone()
+        self.inner.target_nqn.clone()
     }
+
     fn new_path(&self) -> String {
-        self.new_path.clone()
+        self.inner.new_path.clone()
+    }
+
+    fn nvmf_parameters(&self) -> NvmfParameters {
+        self.nvmf_parameters.clone()
+    }
+}
+
+impl ValidateRequestTypes for ReplacePathRequest {
+    type Validated = ValidatedReplacePathRequest;
+
+    fn validated(self) -> Result<Self::Validated, ReplyError> {
+        Ok(ValidatedReplacePathRequest {
+            nvmf_parameters: match self.nvmf_parameters.clone() {
+                Some(parameters) => parameters.into(),
+                None => {
+                    return Err(ReplyError::missing_argument(
+                        ResourceKind::Unknown,
+                        "replace_path.nvmf_parameters",
+                    ))
+                }
+            },
+            inner: self,
+        })
     }
 }
 
@@ -57,6 +96,7 @@ impl From<&dyn ReplacePathInfo> for ReplacePathRequest {
         Self {
             target_nqn: src.target_nqn(),
             new_path: src.new_path(),
+            nvmf_parameters: Some(src.nvmf_parameters().into()),
         }
     }
 }

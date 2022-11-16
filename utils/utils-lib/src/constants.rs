@@ -92,3 +92,9 @@ pub const NVME_PATH_RETRANSMISSION_PERIOD: &str = "10s";
 
 /// Period for aggregating multiple failed paths before reporting them.
 pub const NVME_PATH_AGGREGATION_PERIOD: &str = "1s";
+
+/// Default time period for io timeout for nvme connect.
+pub const DEFAULT_NVMF_IO_TIMEOUT: u32 = 30;
+
+/// Default time period for controller loss for nvme connect.
+pub const DEFAULT_NVMF_CTRL_LOSS_TIMEOUT: u32 = 1980;

@@ -20,6 +20,8 @@ service NodePlugin {
   rpc UnfreezeFS (UnfreezeFSRequest) returns (UnfreezeFSReply) {}
   // Find the volume identified by the volume ID, and return volume information.
   rpc FindVolume (FindVolumeRequest) returns (FindVolumeReply) {}
+
+  rpc NvmeConnect(string) returns () {}
 }
 
 enum VolumeType {

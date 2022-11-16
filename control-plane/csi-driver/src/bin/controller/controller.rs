@@ -5,7 +5,9 @@ use common_lib::types::v0::openapi::models::{
     Volume, VolumeShareProtocol,
 };
 use rpc::csi::{Topology as CsiTopology, *};
-use utils::{CREATED_BY_KEY, DSP_OPERATOR};
+use utils::{
+    CREATED_BY_KEY, DEFAULT_NVMF_CTRL_LOSS_TIMEOUT, DEFAULT_NVMF_IO_TIMEOUT, DSP_OPERATOR,
+};
 
 use csi_driver::{
     context::{CreateParams, PublishParams},
@@ -226,8 +228,10 @@ impl rpc::csi::controller_server::Controller for CsiControllerSvc {
                         volume_topology,
                         thin,
                         NvmfParameters {
-                            io_timeout: context.io_timeout().unwrap_or(30),
-                            ctlr_loss_timeout: context.ctrl_loss_tmo().unwrap_or(1932),
+                            io_timeout: context.io_timeout().unwrap_or(DEFAULT_NVMF_IO_TIMEOUT),
+                            ctlr_loss_timeout: context
+                                .ctrl_loss_tmo()
+                                .unwrap_or(DEFAULT_NVMF_CTRL_LOSS_TIMEOUT),
                         },
                     )
                     .await?;

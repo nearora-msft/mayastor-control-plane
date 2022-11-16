@@ -626,24 +626,6 @@ impl From<TargetConfig> for volume::TargetConfig {
     }
 }
 
-impl From<NvmfParameters> for volume::NvmfParameters {
-    fn from(src: NvmfParameters) -> Self {
-        volume::NvmfParameters {
-            io_timeout: src.io_timeout,
-            ctlr_loss_timeout: src.ctlr_loss_timeout,
-        }
-    }
-}
-
-impl From<volume::NvmfParameters> for NvmfParameters {
-    fn from(src: volume::NvmfParameters) -> Self {
-        NvmfParameters {
-            io_timeout: src.io_timeout,
-            ctlr_loss_timeout: src.ctlr_loss_timeout,
-        }
-    }
-}
-
 impl From<volume::VolumeShareProtocol> for VolumeShareProtocol {
     fn from(src: volume::VolumeShareProtocol) -> Self {
         match src {

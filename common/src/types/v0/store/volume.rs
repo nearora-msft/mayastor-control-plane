@@ -110,7 +110,7 @@ pub struct VolumeSpec {
     pub nvmf_parameters: NvmfParameters,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct NvmfParameters {
     pub io_timeout: u32,
     pub ctlr_loss_timeout: u32,

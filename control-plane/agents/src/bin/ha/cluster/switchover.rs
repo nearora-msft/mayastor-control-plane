@@ -6,6 +6,7 @@ use common_lib::{
     types::v0::{
         store::{
             switchover::{Operation, OperationState, SwitchOverSpec, SwitchOverTime},
+            volume::NvmfParameters,
             SpecTransaction,
         },
         transport::{
@@ -64,6 +65,7 @@ pub struct SwitchOverRequest {
     retry_count: u64,
     // Reuse existing target.
     reuse_existing: bool,
+    nvmf_parameters: NvmfParameters,
 }
 
 impl SwitchOverRequest {
@@ -71,7 +73,7 @@ impl SwitchOverRequest {
     pub fn new(
         callback_uri: SocketAddr,
         volume: VolumeId,
-        existing_path: String,
+        existing_path: String
     ) -> SwitchOverRequest {
         SwitchOverRequest {
             callback_uri,
@@ -82,6 +84,7 @@ impl SwitchOverRequest {
             new_path: None,
             retry_count: 0,
             reuse_existing: true,
+            nvmf_parameters: NvmfParameters::default()
         }
     }
 
@@ -99,6 +102,10 @@ impl SwitchOverRequest {
 
     pub fn timestamp(&self) -> SwitchOverTime {
         self.timestamp
+    }
+
+    pub fn with_nvmf_parameters(&mut self, nvmf_parameters: NvmfParameters) {
+        self.nvmf_parameters = nvmf_parameters
     }
 
     /// Update stage with next stage.
@@ -177,6 +184,7 @@ impl SwitchOverRequest {
             error!(volume.uuid=%self.volume_id, "Could not find device uri for the volume. Marking request as errored");
             return Err(anyhow!("Couldnt find device uri for the volume"));
         }
+        self.with_nvmf_parameters(vol.spec().nvmf_parameters);
         self.complete_op(true, "".to_string(), etcd).await?;
         self.update_next_stage();
         Ok(())
@@ -240,7 +248,7 @@ impl SwitchOverRequest {
         {
             info!(uri=%uri, "Creating node agent client using callback uri");
             if let Some(new_path) = self.new_path.clone() {
-                let replace_request = ReplacePath::new(self.existing_nqn.clone(), new_path.clone());
+                let replace_request = ReplacePath::new(self.existing_nqn.clone(), new_path.clone(), self.nvmf_parameters.clone());
                 let client = NodeAgentClient::new(uri, None).await;
 
                 if let Err(e) = client.replace_path(&replace_request, None).await {
@@ -401,6 +409,7 @@ impl From<&SwitchOverRequest> for SwitchOverSpec {
             new_path: req.new_path.clone(),
             retry_count: req.retry_count,
             reuse_existing: req.reuse_existing,
+            nvmf_parameters: req.nvmf_parameters.clone()
         }
     }
 }
@@ -421,6 +430,7 @@ impl From<&SwitchOverSpec> for SwitchOverRequest {
             new_path: req.new_path.clone(),
             retry_count: req.retry_count,
             reuse_existing: req.reuse_existing,
+            nvmf_parameters: req.nvmf_parameters.clone()
         }
     }
 }

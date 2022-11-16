@@ -1,3 +1,4 @@
+use crate::types::v0::store::volume::NvmfParameters;
 use std::net::SocketAddr;
 
 use super::*;
@@ -87,15 +88,17 @@ impl ReportFailedPaths {
 pub struct ReplacePath {
     target_nqn: String,
     new_path: String,
+    nvmf_parameters: NvmfParameters,
 }
 
 impl ReplacePath {
     /// Creates an instance containing failed and new nexus path to be reported back to node agent
     /// for Nvme connect.
-    pub fn new(target_nqn: String, new_path: String) -> Self {
+    pub fn new(target_nqn: String, new_path: String, nvmf_parameters: NvmfParameters) -> Self {
         Self {
             target_nqn,
             new_path,
+            nvmf_parameters,
         }
     }
 
@@ -107,5 +110,8 @@ impl ReplacePath {
     /// Get newly published nexus path.
     pub fn new_path(&self) -> &str {
         &self.new_path
+    }
+    pub fn nvmf_parameters(&self) -> NvmfParameters {
+        self.nvmf_parameters.clone()
     }
 }

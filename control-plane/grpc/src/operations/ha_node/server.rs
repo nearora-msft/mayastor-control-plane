@@ -1,6 +1,7 @@
 use tonic::{Response, Status};
 
 use crate::{
+    misc::traits::ValidateRequestTypes,
     ha_cluster_agent::{
         ha_node_rpc_server::{HaNodeRpc, HaNodeRpcServer},
         ha_rpc_server::{HaRpc, HaRpcServer},
@@ -33,7 +34,7 @@ impl HaNodeRpc for NodeAgentServer {
         &self,
         request: tonic::Request<ReplacePathRequest>,
     ) -> Result<tonic::Response<()>, tonic::Status> {
-        let msg = request.into_inner();
+        let msg = request.into_inner().validated()?;
 
         match self.service.replace_path(&msg, None).await {
             Ok(_) => Ok(Response::new(())),

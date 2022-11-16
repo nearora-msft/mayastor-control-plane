@@ -270,3 +270,5 @@ impl CsiServer {
         })
     }
 }
+
+//1. Interaction with sockets

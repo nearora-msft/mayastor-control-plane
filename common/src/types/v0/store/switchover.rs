@@ -8,6 +8,7 @@ use crate::types::v0::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use crate::types::v0::store::volume::NvmfParameters;
 
 /// Defines operation for SwitchOverSpec.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -62,6 +63,8 @@ pub struct SwitchOverSpec {
     pub retry_count: u64,
     /// Reuse the existing target.
     pub reuse_existing: bool,
+    /// Nvmf parameters from sc
+    pub nvmf_parameters: NvmfParameters
 }
 
 impl SwitchOverSpec {

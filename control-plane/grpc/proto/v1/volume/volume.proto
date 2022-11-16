@@ -61,14 +61,7 @@ message Metadata {
   // Persistent Configuration of the target (current/last)
   TargetConfig target_config = 2;
   // Nvmf Parameters from the storage class
-  NvmfParameters nvmf_parameters = 3;
-}
-
-message NvmfParameters {
-  // The Io timeout
-  uint32 io_timeout = 1;
-  // The controller loss timeout
-  uint32 ctlr_loss_timeout = 2;
+  common.NvmfParameters nvmf_parameters = 3;
 }
 
 message TargetConfig {
@@ -176,7 +169,7 @@ message CreateVolumeRequest {
   // flag indicating thin provisioning
   bool thin = 8;
   // Nvmf Parameters from the storage class
-  NvmfParameters nvmf_parameters = 9;
+  common.NvmfParameters nvmf_parameters = 9;
 }
 
 // Publish a volume on a node

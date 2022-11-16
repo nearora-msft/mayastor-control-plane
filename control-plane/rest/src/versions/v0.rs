@@ -22,6 +22,7 @@ pub use models::rest_json_error::Kind as RestJsonErrorKind;
 
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use common_lib::types::v0::store::volume::NvmfParameters;
 
 /// Create Replica Body JSON
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
@@ -165,6 +166,8 @@ pub struct CreateVolumeBody {
     pub labels: Option<VolumeLabels>,
     /// Flag indicating whether the volume should be thin provisioned
     pub thin: bool,
+    ///
+    pub nvmf_parameters: NvmfParameters
 }
 impl From<models::CreateVolumeBody> for CreateVolumeBody {
     fn from(src: models::CreateVolumeBody) -> Self {
@@ -175,6 +178,7 @@ impl From<models::CreateVolumeBody> for CreateVolumeBody {
             topology: src.topology.into_opt(),
             labels: src.labels,
             thin: src.thin,
+            nvmf_parameters: src.nvmf_parameters.into()
         }
     }
 }
@@ -187,6 +191,7 @@ impl From<CreateVolume> for CreateVolumeBody {
             topology: create.topology,
             labels: create.labels,
             thin: create.thin,
+            nvmf_parameters: create.nvmf_parameters
         }
     }
 }
@@ -201,7 +206,7 @@ impl CreateVolumeBody {
             topology: self.topology.clone(),
             labels: self.labels.clone(),
             thin: self.thin,
-            nvmf_parameters: Default::default(),
+            nvmf_parameters: self.nvmf_parameters.clone(),
         }
     }
 }

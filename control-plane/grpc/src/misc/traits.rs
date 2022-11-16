@@ -1,5 +1,8 @@
 use crate::common;
-use common_lib::transport_api::{ReplyError, ReplyErrorKind, ResourceKind};
+use common_lib::{
+    transport_api::{ReplyError, ReplyErrorKind, ResourceKind},
+    types::v0::store::volume::NvmfParameters,
+};
 
 /// Trait to validate the Grpc type by an intermediate conversion
 pub trait ValidateRequestTypes {
@@ -156,3 +159,21 @@ impl From<crate::common::ReplyError> for ReplyError {
 /// A newtype that is similar to a google StringValue generated code
 /// for simpler conversion to uuids
 pub struct StringValue(pub Option<String>);
+
+impl From<NvmfParameters> for common::NvmfParameters {
+    fn from(src: NvmfParameters) -> Self {
+        common::NvmfParameters {
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout,
+        }
+    }
+}
+
+impl From<common::NvmfParameters> for NvmfParameters {
+    fn from(src: common::NvmfParameters) -> Self {
+        NvmfParameters {
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout,
+        }
+    }
+}

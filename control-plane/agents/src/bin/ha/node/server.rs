@@ -18,6 +18,7 @@ use nvmeadm::{
 };
 use std::{net::SocketAddr, sync::Arc};
 use tokio::time::{sleep, Duration};
+use common_lib::types::v0::store::volume::NvmfParameters;
 use utils::NVME_TARGET_NQN_PREFIX;
 
 /// Common error source name for all gRPC errors in HA Node agent.
@@ -109,7 +110,7 @@ fn disconnect_controller(ctrlr: &NvmeController, new_path: String) -> Result<(),
 
 impl NodeAgentSvc {
     /// Translate new path URI into connection arguments for Subsystem connect API.
-    fn get_nvmf_connection_args(&self, new_path: &str) -> Option<ConnectArgs> {
+    fn get_nvmf_connection_args(&self, new_path: &str, nvmf_parameters: NvmfParameters) -> Option<ConnectArgs> {
         let parsed_path = parse_uri(new_path).ok()?;
 
         // Check NQN of the subsystem to make sure it belongs to the product.
@@ -121,15 +122,15 @@ impl NodeAgentSvc {
             .traddr(parsed_path.host())
             .trsvcid(parsed_path.port())
             .nqn(parsed_path.nqn())
-            .ctrl_loss_tmo(Some(5))
-            .reconnect_delay(Some(10))
+            .ctrl_loss_tmo(Some(nvmf_parameters.ctlr_loss_timeout))
+            .reconnect_delay(Some(nvmf_parameters.ctlr_loss_timeout))
             .build()
             .ok()
     }
 
     /// Connect NVMe controller. Wait till the controller is fully connected.
-    async fn connect_controller(&self, new_path: String, nqn: String) -> Result<(), SvcError> {
-        let connect_args = match self.get_nvmf_connection_args(&new_path) {
+    async fn connect_controller(&self, new_path: String, nqn: String, nvmf_parameters: NvmfParameters) -> Result<(), SvcError> {
+        let connect_args = match self.get_nvmf_connection_args(&new_path, nvmf_parameters) {
             Some(ca) => ca,
             None => return Err(SvcError::InvalidArguments {}),
         };
@@ -242,7 +243,7 @@ impl NodeAgentOperations for NodeAgentSvc {
         // Step 1: populate an additional healthy path to target NQN in addition to
         // existing failed path. Once this additional path is created, client I/O
         // automatically resumes.
-        self.connect_controller(request.new_path(), request.target_nqn())
+        self.connect_controller(request.new_path(), request.target_nqn(), request.nvmf_parameters())
             .await?;
 
         // Step 2: disconnect broken path to leave the only new healthy path.
