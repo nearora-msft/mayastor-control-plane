@@ -2024,6 +2024,26 @@ components:
           type: boolean
       required:
         - self_heal
+    NvmfParameters:
+      example:
+        io_timeout: 30
+        ctlr_loss_timeout: 1932
+      description: Nvmf parameters are specified in storage class.
+      type: object
+      properties:
+        io_timeout:
+          description: I/O timeout for each I/O
+          type: integer
+          format: int32
+          minimum: 0
+        ctlr_loss_timeout:
+          description: Controlller Loss timeout for kernel to remove path.
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+        - io_timeout
+        - ctlr_loss_timeout
     CreateVolumeBody:
       example:
         policy:
@@ -2058,11 +2078,14 @@ components:
           type: object
           additionalProperties:
             type: string
+        nvmf_parameters:
+          $ref: '#/components/schemas/NvmfParameters'
       required:
         - policy
         - replicas
         - size
         - thin
+        - nvmf_parameters
     JsonGeneric:
       description: 'Generic JSON value eg: { "size": 1024 }'
       type: object

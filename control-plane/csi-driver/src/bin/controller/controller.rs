@@ -1,8 +1,8 @@
 use crate::{ApiClientError, CreateVolumeTopology, CsiControllerConfig, IoEngineApiClient};
 
 use common_lib::types::v0::openapi::models::{
-    LabelledTopology, NodeStatus, Pool, PoolStatus, PoolTopology, SpecStatus, Volume,
-    VolumeShareProtocol,
+    LabelledTopology, NodeStatus, NvmfParameters, Pool, PoolStatus, PoolTopology, SpecStatus,
+    Volume, VolumeShareProtocol,
 };
 use rpc::csi::{Topology as CsiTopology, *};
 use utils::{CREATED_BY_KEY, DSP_OPERATOR};
@@ -219,7 +219,17 @@ impl rpc::csi::controller_server::Controller for CsiControllerSvc {
                 );
 
                 IoEngineApiClient::get_client()
-                    .create_volume(&u, replica_count, size, volume_topology, thin)
+                    .create_volume(
+                        &u,
+                        replica_count,
+                        size,
+                        volume_topology,
+                        thin,
+                        NvmfParameters {
+                            io_timeout: context.io_timeout().unwrap_or(30),
+                            ctlr_loss_timeout: context.ctrl_loss_tmo().unwrap_or(1932),
+                        },
+                    )
                     .await?;
 
                 debug!(volume.uuid = volume_uuid, "Volume successfully created");

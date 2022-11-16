@@ -14,7 +14,7 @@ use crate::{
 use common_lib::{
     transport_api::{v0::Volumes, ReplyError, ResourceKind},
     types::v0::{
-        store::volume::{TargetConfig, VolumeSpec, VolumeTarget},
+        store::volume::{NvmfParameters, TargetConfig, VolumeSpec, VolumeTarget},
         transport::{
             CreateVolume, DestroyShutdownTargets, DestroyVolume, ExplicitNodeTopology, Filter,
             LabelledTopology, Nexus, NexusId, NodeId, NodeTopology, PoolTopology, PublishVolume,
@@ -116,6 +116,7 @@ impl From<VolumeSpec> for volume::VolumeDefinition {
             metadata: Some(volume::Metadata {
                 spec_status: spec_status as i32,
                 target_config: volume_spec.target_config.into_opt(),
+                nvmf_parameters: Some(volume_spec.nvmf_parameters.into()),
             }),
         }
     }
@@ -232,6 +233,15 @@ impl TryFrom<volume::VolumeDefinition> for VolumeSpec {
             operation: None,
             thin: volume_spec.thin,
             target_config: None,
+            nvmf_parameters: match volume_meta.nvmf_parameters {
+                Some(parameters) => parameters.into(),
+                None => {
+                    return Err(ReplyError::missing_argument(
+                        ResourceKind::Volume,
+                        "volume.definition.metadata.nvmf_parameters",
+                    ))
+                }
+            },
         };
         Ok(volume_spec)
     }
@@ -616,6 +626,24 @@ impl From<TargetConfig> for volume::TargetConfig {
     }
 }
 
+impl From<NvmfParameters> for volume::NvmfParameters {
+    fn from(src: NvmfParameters) -> Self {
+        volume::NvmfParameters {
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout,
+        }
+    }
+}
+
+impl From<volume::NvmfParameters> for NvmfParameters {
+    fn from(src: volume::NvmfParameters) -> Self {
+        NvmfParameters {
+            io_timeout: src.io_timeout,
+            ctlr_loss_timeout: src.ctlr_loss_timeout,
+        }
+    }
+}
+
 impl From<volume::VolumeShareProtocol> for VolumeShareProtocol {
     fn from(src: volume::VolumeShareProtocol) -> Self {
         match src {
@@ -661,6 +689,8 @@ pub trait CreateVolumeInfo: Send + Sync + std::fmt::Debug {
     fn labels(&self) -> Option<VolumeLabels>;
     /// Flag indicating whether the volume should be thin provisioned
     fn thin(&self) -> bool;
+    /// Flag indicating whether the volume should be thin provisioned
+    fn nvmf_parameters(&self) -> NvmfParameters;
 }
 
 impl CreateVolumeInfo for CreateVolume {
@@ -691,6 +721,10 @@ impl CreateVolumeInfo for CreateVolume {
     fn thin(&self) -> bool {
         self.thin
     }
+
+    fn nvmf_parameters(&self) -> NvmfParameters {
+        self.nvmf_parameters.clone()
+    }
 }
 
 /// Intermediate structure that validates the conversion to CreateVolumeRequest type.
@@ -699,6 +733,7 @@ pub struct ValidatedCreateVolumeRequest {
     inner: CreateVolumeRequest,
     uuid: VolumeId,
     topology: Option<Topology>,
+    nvmf_parameters: NvmfParameters,
 }
 
 impl CreateVolumeInfo for ValidatedCreateVolumeRequest {
@@ -735,6 +770,10 @@ impl CreateVolumeInfo for ValidatedCreateVolumeRequest {
     fn thin(&self) -> bool {
         self.inner.thin
     }
+
+    fn nvmf_parameters(&self) -> NvmfParameters {
+        self.nvmf_parameters.clone()
+    }
 }
 
 impl ValidateRequestTypes for CreateVolumeRequest {
@@ -755,6 +794,15 @@ impl ValidateRequestTypes for CreateVolumeRequest {
                 },
                 None => None,
             },
+            nvmf_parameters: match self.nvmf_parameters.clone() {
+                Some(parameters) => parameters.into(),
+                None => {
+                    return Err(ReplyError::missing_argument(
+                        ResourceKind::Volume,
+                        "create_volume_request.nvmf_parameters",
+                    ))
+                }
+            },
             inner: self,
         })
     }
@@ -770,6 +818,7 @@ impl From<&dyn CreateVolumeInfo> for CreateVolume {
             topology: data.topology(),
             labels: data.labels(),
             thin: data.thin(),
+            nvmf_parameters: data.nvmf_parameters(),
         }
     }
 }
@@ -786,6 +835,7 @@ impl From<&dyn CreateVolumeInfo> for CreateVolumeRequest {
                 .labels()
                 .map(|labels| crate::common::StringMapValue { value: labels }),
             thin: data.thin(),
+            nvmf_parameters: Some(data.nvmf_parameters().into()),
         }
     }
 }

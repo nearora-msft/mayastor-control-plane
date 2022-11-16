@@ -106,6 +106,23 @@ pub struct VolumeSpec {
     /// Last used Target Configuration.
     #[serde(default)]
     pub target_config: Option<TargetConfig>,
+    #[serde(default)]
+    pub nvmf_parameters: NvmfParameters,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct NvmfParameters {
+    pub io_timeout: u32,
+    pub ctlr_loss_timeout: u32,
+}
+
+impl Default for NvmfParameters {
+    fn default() -> Self {
+        NvmfParameters {
+            io_timeout: 30,
+            ctlr_loss_timeout: 1932,
+        }
+    }
 }
 
 /// The volume's Nvmf Configuration.
@@ -427,6 +444,7 @@ impl From<&CreateVolume> for VolumeSpec {
             operation: None,
             thin: request.thin,
             target_config: None,
+            nvmf_parameters: request.nvmf_parameters.clone(),
         }
     }
 }

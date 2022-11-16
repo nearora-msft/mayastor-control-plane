@@ -115,6 +115,12 @@ impl CreateParams {
     pub fn replica_count(&self) -> u8 {
         self.replica_count
     }
+    pub fn io_timeout(&self) -> Option<u32> {
+        self.io_timeout
+    }
+    pub fn ctrl_loss_tmo(&self) -> Option<u32> {
+        self.ctrl_loss_tmo
+    }
 }
 impl TryFrom<&HashMap<String, String>> for CreateParams {
     type Error = tonic::Status;

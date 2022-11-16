@@ -1,7 +1,7 @@
 use crate::resources::{
     FormatSamples, ResourceDelete, ResourceMgr, ResourceSample, ResourceUpdates,
 };
-use openapi::{apis::Uuid, clients::tower::direct::ApiClient, models};
+use openapi::{apis::Uuid, clients::tower::direct::ApiClient, models, models::NvmfParameters};
 
 /// Resource manager for volumes.
 #[derive(Default)]
@@ -36,6 +36,7 @@ impl ResourceMgr for VolMgr {
                         self.n_replicas,
                         self.size_bytes,
                         false,
+                        NvmfParameters::default(),
                     ),
                 )
                 .await?;

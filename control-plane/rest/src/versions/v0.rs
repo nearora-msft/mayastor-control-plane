@@ -201,6 +201,7 @@ impl CreateVolumeBody {
             topology: self.topology.clone(),
             labels: self.labels.clone(),
             thin: self.thin,
+            nvmf_parameters: Default::default(),
         }
     }
 }

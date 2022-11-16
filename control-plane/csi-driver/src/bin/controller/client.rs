@@ -3,8 +3,8 @@ use common_lib::types::v0::openapi::{
     clients,
     clients::tower::StatusCode,
     models::{
-        CreateVolumeBody, Node, NodeTopology, Pool, PoolTopology, RestJsonError, Topology, Volume,
-        VolumePolicy, VolumeShareProtocol, Volumes,
+        CreateVolumeBody, Node, NodeTopology, NvmfParameters, Pool, PoolTopology, RestJsonError,
+        Topology, Volume, VolumePolicy, VolumeShareProtocol, Volumes,
     },
 };
 
@@ -188,6 +188,7 @@ impl IoEngineApiClient {
         size: u64,
         volume_topology: CreateVolumeTopology,
         thin: bool,
+        nvmf_parameters: NvmfParameters,
     ) -> Result<Volume, ApiClientError> {
         let topology =
             Topology::new_all(volume_topology.node_topology, volume_topology.pool_topology);
@@ -199,6 +200,7 @@ impl IoEngineApiClient {
             topology: Some(topology),
             policy: VolumePolicy::new_all(true),
             labels: None,
+            nvmf_parameters,
         };
 
         let result = self

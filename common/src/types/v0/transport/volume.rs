@@ -1,6 +1,9 @@
 use super::*;
 
-use crate::{types::v0::store::volume::VolumeSpec, IntoOption};
+use crate::{
+    types::v0::store::volume::{NvmfParameters, VolumeSpec},
+    IntoOption,
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, convert::TryFrom, fmt::Debug};
 
@@ -348,6 +351,8 @@ pub struct CreateVolume {
     pub labels: Option<VolumeLabels>,
     /// flag indicating whether the volume should be thin provisioned
     pub thin: bool,
+    /// the nvmf parameters from sc
+    pub nvmf_parameters: NvmfParameters,
 }
 
 /// Volume label information
