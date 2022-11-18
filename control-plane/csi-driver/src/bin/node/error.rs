@@ -1,6 +1,7 @@
 //! Definition of DeviceError used by the attach and detach code.
 use nvmeadm::nvmf_discovery;
 use std::string::FromUtf8Error;
+use tonic::Code;
 
 /// A Device Attach/Detach error.
 /// todo: should this be an enum?
@@ -102,5 +103,11 @@ impl From<anyhow::Error> for DeviceError {
         DeviceError {
             message: error.to_string(),
         }
+    }
+}
+
+impl From<DeviceError> for tonic::Status {
+    fn from(error: DeviceError) -> Self {
+        tonic::Status::new(Code::Aborted, error.to_string())
     }
 }

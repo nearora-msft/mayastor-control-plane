@@ -1,24 +1,27 @@
 use crate::{
     detector::{NvmeController, NvmePathCache},
     path_provider::get_nvme_path_buf,
+    SOCKET_PATH,
 };
 use agents::errors::SvcError;
-use common_lib::transport_api::{ErrorChain, ReplyError, ResourceKind};
+use common_lib::transport_api::{ErrorChain, ReplyError, ResourceKind, TimeoutOptions};
 use grpc::{
     context::Context,
+    nvme::{nvme_connection_client::NvmeConnectionClient, NvmeConnectRequest},
     operations::ha_node::{
         server::NodeAgentServer,
         traits::{NodeAgentOperations, ReplacePathInfo},
     },
 };
 use http::Uri;
-use nvmeadm::{
-    nvmf_discovery::{ConnectArgs, ConnectArgsBuilder},
-    nvmf_subsystem::{NvmeSubsystems, Subsystem},
+use nvmeadm::nvmf_subsystem::{NvmeSubsystems, Subsystem};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use tokio::{
+    net::UnixStream,
+    time::{sleep, Duration},
 };
-use std::{net::SocketAddr, sync::Arc};
-use tokio::time::{sleep, Duration};
-use utils::NVME_TARGET_NQN_PREFIX;
+use tonic::transport::{Channel, Endpoint};
+use tower::service_fn;
 
 /// Common error source name for all gRPC errors in HA Node agent.
 const HA_AGENT_ERR_SOURCE: &str = "HA Node agent gRPC server";
@@ -50,6 +53,29 @@ impl NodeAgentApiServer {
             .run_err(self.endpoint)
             .await
     }
+}
+
+async fn get_nvme_connection_client(
+    timeout_options: TimeoutOptions,
+) -> Result<NvmeConnectionClient<Channel>, SvcError> {
+    let socket_path = SOCKET_PATH.get().ok_or(SvcError::NotFound {
+        kind: ResourceKind::Unknown,
+        id: "csi socket path".to_string(),
+    })?;
+    let endpoint = Endpoint::try_from("http://[::]")
+        .map_err(|_| SvcError::InvalidArguments {})?
+        .connect_timeout(timeout_options.connect_timeout());
+
+    let channel = endpoint
+        .connect_with_connector(service_fn(move |_: Uri| {
+            UnixStream::connect("/var/tmp/csi-app-node-1.sock")
+        }))
+        .await
+        .map_err(|e| SvcError::GrpcUdsConnect {
+            path: "/var/tmp/csi-app-node-1.sock".to_string(),
+            source: e,
+        })?;
+    Ok(NvmeConnectionClient::new(channel))
 }
 
 /// The gRPC server implementation for the HA Node agent.
@@ -108,31 +134,12 @@ fn disconnect_controller(ctrlr: &NvmeController, new_path: String) -> Result<(),
 }
 
 impl NodeAgentSvc {
-    /// Translate new path URI into connection arguments for Subsystem connect API.
-    fn get_nvmf_connection_args(&self, new_path: &str) -> Option<ConnectArgs> {
-        let parsed_path = parse_uri(new_path).ok()?;
-
-        // Check NQN of the subsystem to make sure it belongs to the product.
-        if !parsed_path.nqn().starts_with(NVME_TARGET_NQN_PREFIX) {
-            return None;
-        }
-
-        ConnectArgsBuilder::default()
-            .traddr(parsed_path.host())
-            .trsvcid(parsed_path.port())
-            .nqn(parsed_path.nqn())
-            .ctrl_loss_tmo(Some(5))
-            .reconnect_delay(Some(10))
-            .build()
-            .ok()
-    }
-
     /// Connect NVMe controller. Wait till the controller is fully connected.
     async fn connect_controller(&self, new_path: String, nqn: String) -> Result<(), SvcError> {
-        let connect_args = match self.get_nvmf_connection_args(&new_path) {
-            Some(ca) => ca,
-            None => return Err(SvcError::InvalidArguments {}),
-        };
+        let mut client: NvmeConnectionClient<Channel> = get_nvme_connection_client(
+            TimeoutOptions::new().with_connect_timeout(Duration::from_millis(150)),
+        )
+        .await?;
 
         tracing::info!(new_path, "Connecting to NVMe target");
 
@@ -140,29 +147,32 @@ impl NodeAgentSvc {
         // the second path and add it as an alternative for the first broken one,
         // which immediately resumes all stalled I/O
 
-        let parsed_uri = parse_uri(new_path.as_str())?;
-        let mut subsystem = match get_subsystem(&parsed_uri) {
-            Ok(subsystem) => subsystem,
-            Err(_) => match connect_args.connect() {
-                Ok(subsystem) => {
-                    tracing::info!(new_path, "Successfully connected to NVMe target");
-                    subsystem
-                }
-                Err(error) => {
-                    tracing::error!(
-                        new_path,
-                        error=%error,
-                        "Failed to connect to new NVMe target"
-                    );
-                    let nvme_err = format!(
-                        "Failed to connect to new NVMe target: {}, new path: {}, nqn: {}",
-                        error.full_string(),
-                        new_path,
-                        nqn
-                    );
-                    return Err(SvcError::Internal { details: nvme_err });
-                }
-            },
+        let mut subsystem = match client
+            .nvme_connect(NvmeConnectRequest {
+                uri: new_path.clone(),
+                publish_context: HashMap::new(),
+            })
+            .await
+        {
+            Ok(_) => {
+                tracing::info!(new_path, "Successfully connected to NVMe target");
+                let parsed_uri = parse_uri(new_path.as_str())?;
+                get_subsystem(&parsed_uri)?
+            }
+            Err(error) => {
+                tracing::error!(
+                    new_path,
+                    error=%error,
+                    "Failed to connect to new NVMe target"
+                );
+                let nvme_err = format!(
+                    "Failed to connect to new NVMe target: {}, new path: {}, nqn: {}",
+                    error.full_string(),
+                    new_path,
+                    nqn
+                );
+                return Err(SvcError::Internal { details: nvme_err });
+            }
         };
 
         // Wait till new controller is fully connected before completing the call.

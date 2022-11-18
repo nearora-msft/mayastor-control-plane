@@ -57,10 +57,10 @@ impl PathReporter {
 
             loop {
                 // Phase 1: wait till a path batch is available.
-                let batch = aggregator
-                    .receive_batch()
-                    .await
-                    .expect("Failed to receive aggregated paths");
+                let batch = match aggregator.receive_batch().await {
+                    Ok(val) => val,
+                    Err(_) => continue,
+                };
 
                 // Phase 2: send all aggregated paths in one shot.
                 let failed_paths = batch

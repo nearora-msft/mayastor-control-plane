@@ -167,9 +167,13 @@ impl Attach for NvmfAttach {
             .reconnect_delay(reconnect_delay)
             .nr_io_queues(self.nr_io_queues)
             .build()?;
+        println!("Connect args {}", ca.to_string());
         match ca.connect() {
             Err(NvmeError::ConnectInProgress) => Ok(()),
-            Err(err) => Err(format!("connect failed: {}", err).into()),
+            Err(err) => {
+                println!("{:?}", err);
+                Err(format!("connect failed: {}", err).into())
+            }
             Ok(_) => Ok(()),
         }
     }

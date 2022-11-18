@@ -431,7 +431,7 @@ impl_component! {
     IoEngine,       4,
     CsiNode,        5,
     CsiController,  5,
-    HaNodeAgent,    5,
+    HaNodeAgent,    6,
 }
 
 // Control Plane Agents

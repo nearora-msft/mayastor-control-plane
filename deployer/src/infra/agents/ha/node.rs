@@ -17,8 +17,10 @@ impl ComponentAction for HaNodeAgent {
                 .with_arg(format!("-n{}", CsiNode::name(0)).as_str())
                 .with_arg(socket.as_str()),
         )
+        .with_bypass_default_mounts(true)
         .with_bind("/run/udev", "/run/udev:ro")
         .with_bind("/dev", "/dev:ro")
+        .with_bind("/var/tmp", "/var/tmp")
         .with_privileged(Some(true))
         .with_portmap("11600", "11600");
 

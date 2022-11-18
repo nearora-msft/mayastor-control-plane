@@ -110,6 +110,7 @@ def background():
         3,
         node_agent=True,
         cluster_agent=True,
+        csi_node=True,
         cache_period="1s",
         io_engine_env="NEXUS_NVMF_ANA_ENABLE=1,NEXUS_NVMF_RESV_ENABLE=1",
         agents_env="TEST_NEXUS_NVMF_ANA_ENABLE=1",
@@ -125,7 +126,7 @@ def background():
         VOLUME_UUID, Protocol("nvmf"), node=TARGET_NODE_1
     )
     yield volume
-    Deployer.stop()
+    # Deployer.stop()
 
 
 @pytest.fixture

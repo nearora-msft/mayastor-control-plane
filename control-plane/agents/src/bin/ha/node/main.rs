@@ -17,8 +17,8 @@ mod reporter;
 mod server;
 
 use detector::PathFailureDetector;
-use server::NodeAgentApiServer;
 
+use server::NodeAgentApiServer;
 /// TODO
 #[derive(Debug, StructOpt)]
 #[structopt(name = package_description!(), version = version_info_str!())]
@@ -54,9 +54,14 @@ struct Cli {
     /// Sends opentelemetry spans to the Jaeger endpoint agent.
     #[structopt(long, short)]
     jaeger: Option<String>,
+
+    #[structopt(long, default_value = "/var/tmp/csi.sock")]
+    csi_socket: String,
 }
 
 static CLUSTER_AGENT_CLIENT: OnceCell<ClusterAgentClient> = OnceCell::new();
+
+static SOCKET_PATH: OnceCell<String> = OnceCell::new();
 
 pub fn cluster_agent_client() -> &'static ClusterAgentClient {
     CLUSTER_AGENT_CLIENT
@@ -84,6 +89,13 @@ async fn main() {
 
     CLUSTER_AGENT_CLIENT
         .set(ClusterAgentClient::new(cli_args.cluster_agent.clone(), None).await)
+        .ok()
+        .expect("Expect to be initialized only once");
+
+    let socket = &cli_args.csi_socket;
+
+    SOCKET_PATH
+        .set(socket.clone())
         .ok()
         .expect("Expect to be initialized only once");
 

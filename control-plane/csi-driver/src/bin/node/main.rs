@@ -3,10 +3,14 @@
 //! Implementation of gRPC methods from the CSI spec. This includes mounting
 //! of volumes using iscsi/nvmf protocols on the node.
 
-use crate::{identity::Identity, mount::probe_filesystems, node::Node, shutdown_event::Shutdown};
+use crate::{
+    identity::Identity, mount::probe_filesystems, node::Node, nvme_svc::NvmeConnectionSvc,
+    shutdown_event::Shutdown,
+};
 use clap::{App, Arg};
 use csi_driver::csi::{identity_server::IdentityServer, node_server::NodeServer};
 use futures::TryFutureExt;
+use grpc::nvme::nvme_connection_server::NvmeConnectionServer;
 use nodeplugin_grpc::NodePluginGrpcServer;
 use std::{
     env, fs,
@@ -37,6 +41,7 @@ mod mount;
 mod node;
 mod nodeplugin_grpc;
 mod nodeplugin_svc;
+mod nvme_svc;
 
 /// Shutdown event which lets the plugin know it needs to stop processing new events and
 /// complete any existing ones before shutting down.
@@ -90,7 +95,7 @@ impl AsyncWrite for UnixStream {
     }
 }
 
-const GRPC_PORT: u16 = 50051;
+const GRPC_PORT: u16 = 50055;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -260,6 +265,7 @@ impl CsiServer {
         Ok(async move {
             Server::builder()
                 .add_service(NodeServer::new(node))
+                .add_service(NvmeConnectionServer::new(NvmeConnectionSvc {}))
                 .add_service(IdentityServer::new(Identity {}))
                 .serve_with_incoming_shutdown(incoming, Shutdown::wait())
                 .await

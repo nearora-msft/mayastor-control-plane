@@ -67,6 +67,7 @@ sysfs = { path = "../../utils/dependencies/sysfs" }
 common-lib = { path = "../../common" }
 utils = { path = "../../utils/utils-lib" }
 shutdown = { path = "../../utils/shutdown" }
+grpc = { path = "../grpc" }
 
 [dependencies.serde]
 features = ["derive"]

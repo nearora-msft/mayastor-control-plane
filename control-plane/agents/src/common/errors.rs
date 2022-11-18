@@ -54,6 +54,11 @@ pub enum SvcError {
         endpoint: String,
         source: tonic::transport::Error,
     },
+    #[snafu(display("Failed to connect to grpc sever via uds socket path '{}'", path,))]
+    GrpcUdsConnect {
+        path: String,
+        source: tonic::transport::Error,
+    },
     #[snafu(display("Node '{}' has invalid gRPC URI '{}'", node_id, uri))]
     GrpcConnectUri {
         node_id: String,
@@ -625,6 +630,12 @@ impl From<SvcError> for ReplyError {
                 resource: ResourceKind::Unknown,
                 source: desc.to_string(),
                 extra: error.full_string(),
+            },
+            SvcError::GrpcUdsConnect { .. } => ReplyError {
+                kind: ReplyErrorKind::Internal,
+                resource: ResourceKind::Unknown,
+                source: desc.to_string(),
+                extra: error_str,
             },
         }
     }
