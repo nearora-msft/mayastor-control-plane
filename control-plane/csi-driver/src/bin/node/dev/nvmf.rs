@@ -171,6 +171,7 @@ impl Attach for NvmfAttach {
             .trsvcid(self.port.to_string())
             .nqn(&self.nqn)
             .ctrl_loss_tmo(self.ctrl_loss_tmo)
+            .keep_alive_tmo(30)
             .reconnect_delay(reconnect_delay)
             .nr_io_queues(self.nr_io_queues)
             .hostnqn(self.hostnqn.clone())
