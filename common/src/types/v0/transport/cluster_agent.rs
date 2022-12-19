@@ -1,6 +1,6 @@
-use std::{collections::HashMap, net::SocketAddr};
-
 use super::*;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, net::SocketAddr};
 
 #[derive(Debug)]
 pub struct NodeAgentInfo {
@@ -82,6 +82,42 @@ impl ReportFailedPaths {
         &self.failed_paths
     }
 }
+
+#[derive(Debug)]
+pub struct GetController {
+    nvme_path: String,
+}
+
+impl GetController {
+    pub fn new(nvme_path: String) -> Self {
+        Self { nvme_path }
+    }
+    pub fn nvme_path(&self) -> String {
+        self.nvme_path.clone()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NvmeSubsystem {
+    address: String,
+}
+
+impl NvmeSubsystem {
+    pub fn new(target_addr: String) -> Self {
+        Self {
+            address: target_addr,
+        }
+    }
+    pub fn address(&self) -> String {
+        self.address.clone()
+    }
+}
+
+// impl From<NvmeSubsystem> for String {
+//     fn from(subsys: NvmeSubsystem) -> Self {
+//         subsys.to_string()
+//     }
+// }
 
 #[derive(Debug)]
 pub struct ReplacePath {

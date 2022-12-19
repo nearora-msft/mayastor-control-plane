@@ -3,7 +3,7 @@ use crate::{
     detector::{NvmeController, NvmePathCache},
     path_provider::get_nvme_path_entry,
 };
-use agents::errors::SvcError;
+use agents::errors::{SvcError, SvcError::SubsystemNotFound};
 use common_lib::transport_api::{ErrorChain, ReplyError, ResourceKind};
 use grpc::{
     common::MapWrapper,
@@ -15,9 +15,15 @@ use grpc::{
     },
 };
 
-use agents::errors::SvcError::SubsystemNotFound;
+use common_lib::{
+    transport_api::v0::NvmeSubsystems as NvmeSubsys,
+    types::v0::transport::NvmeSubsystem as NvmeCtrller,
+};
+use grpc::operations::ha_node::traits::GetControllerInfo;
+use nvmeadm::nvmf_subsystem::{NvmeSubsystems, SubsystemAddr};
+
 use http::Uri;
-use nvmeadm::nvmf_subsystem::{Subsystem, SubsystemAddr};
+use nvmeadm::nvmf_subsystem::Subsystem;
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::time::{sleep, Duration};
 use utils::NVME_TARGET_NQN_PREFIX;
@@ -262,6 +268,28 @@ impl NodeAgentOperations for NodeAgentSvc {
         };
         Ok(())
     }
+
+    async fn get_nvme_controller(
+        &self,
+        request: &dyn GetControllerInfo,
+        _context: Option<Context>,
+    ) -> Result<NvmeSubsys, ReplyError> {
+        match parse_uri(request.clone().nvme_path().as_str()) {
+            Ok(uri) => match get_subsystems(&uri) {
+                Ok(nvme_paths) => Ok(NvmeSubsys(nvme_paths)),
+                Err(_) => Err(ReplyError::not_found(
+                    ResourceKind::Unknown,
+                    "Node agent".to_string(),
+                    "Could not find any subsystems for the supplied nqn".to_string(),
+                )),
+            },
+            Err(_) => Err(ReplyError::invalid_argument(
+                ResourceKind::Unknown,
+                request.clone().nvme_path().as_str(),
+                format!("Could not parse nvme path to required format"),
+            )),
+        }
+    }
 }
 
 // Returns the host, port, nqn respectively from the path after parsing.
@@ -271,6 +299,26 @@ fn parse_uri(new_path: &str) -> Result<ParsedUri, SvcError> {
         .map_err(|_| SvcError::InvalidArguments {})?;
 
     ParsedUri::new(uri)
+}
+
+/// Gets all Nvme subsystems registered for a given volume.
+fn get_subsystems(parsed_uri: &ParsedUri) -> Result<Vec<NvmeCtrller>, SvcError> {
+    let nqn = parsed_uri.nqn();
+    let nvme_subsystems = NvmeSubsystems::new().map_err(|_| SvcError::SubsystemNotFound {
+        nqn: nqn.to_owned(),
+        details: "Could not list Nvme subsystems".to_string(),
+    })?;
+    let mut nvme_paths = vec![];
+    for path in nvme_subsystems.flatten() {
+        if path.nqn == nqn && (path.state == "live" || path.state == "connecting") {
+            nvme_paths.push(NvmeCtrller::new(path.address));
+        }
+    }
+    if !nvme_paths.is_empty() {
+        Err(SvcError::NoSubsystemFound { nvme_path: nqn })
+    } else {
+        Ok(nvme_paths)
+    }
 }
 
 struct ParsedUri {

@@ -605,12 +605,22 @@ impl From<&ReplicaTopology> for models::ReplicaTopology {
 #[serde(rename_all = "camelCase")]
 pub struct DestroyShutdownTargets {
     /// The uuid of the owner, i.e the volume.
-    pub uuid: VolumeId,
+    uuid: VolumeId,
+    registered_targets: Option<Vec<String>>,
 }
 
 impl DestroyShutdownTargets {
     /// Create new `Self` from the given volume id.
-    pub fn new(uuid: VolumeId) -> Self {
-        DestroyShutdownTargets { uuid }
+    pub fn new(uuid: VolumeId, registered_targets: Option<Vec<String>>) -> Self {
+        DestroyShutdownTargets {
+            uuid,
+            registered_targets,
+        }
+    }
+    pub fn uuid(&self) -> VolumeId {
+        self.uuid.clone()
+    }
+    pub fn registered_targets(&self) -> Option<Vec<String>> {
+        self.registered_targets.clone()
     }
 }

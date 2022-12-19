@@ -32,7 +32,7 @@ use common_lib::{
         },
         transport::{
             CreateVolume, DestroyNexus, DestroyReplica, DestroyShutdownTargets, DestroyVolume,
-            NexusId, NexusNvmePreemption, NexusNvmfConfig, NodeId, NvmeReservation,
+            Nexus, NexusId, NexusNvmePreemption, NexusNvmfConfig, NodeId, NvmeReservation,
             NvmfControllerIdRange, Protocol, PublishVolume, Replica, ReplicaOwners,
             RepublishVolume, SetVolumeReplica, ShareNexus, ShareVolume, ShutdownNexus,
             UnpublishVolume, UnshareNexus, UnshareVolume, Volume, VolumeShareProtocol,
@@ -40,6 +40,7 @@ use common_lib::{
     },
     HostAccessControl,
 };
+use http::Uri;
 use std::ops::Deref;
 use tracing::info;
 
@@ -563,22 +564,29 @@ impl ResourceShutdownOperations for OperationGuardArc<VolumeSpec> {
     ) -> Result<(), SvcError> {
         let shutdown_nexuses = registry
             .specs()
-            .get_volume_shutdown_nexuses(&request.uuid)
+            .get_volume_shutdown_nexuses(&request.uuid())
             .await;
-
         let mut result = Ok(());
+        let filter_needed = request.registered_targets().is_some();
         for nexus_res in shutdown_nexuses {
             match nexus_res.operation_guard_wait().await {
                 Ok(mut guard) => {
+                    let uuid = nexus_res.lock().clone().uuid;
+                    let nexus = registry.get_nexus(&uuid).await?;
+                    if filter_needed
+                        && filter_targets(request.registered_targets().unwrap_or(vec![]), nexus)?
+                    {
+                        continue;
+                    }
                     let nexus_spec = guard.as_ref().clone();
                     let destroy_req = DestroyNexus::from(nexus_spec)
-                        .with_disown(&request.uuid)
+                        .with_disown(&request.uuid())
                         .with_lazy(true);
                     match guard.destroy(registry, &destroy_req).await {
                         Ok(_) => {
                             if self.as_ref().health_info_id() != Some(guard.uuid()) {
                                 ResourceSpecsLocked::delete_nexus_info(
-                                    &NexusInfoKey::new(&Some(request.uuid.clone()), guard.uuid()),
+                                    &NexusInfoKey::new(&Some(request.uuid()), guard.uuid()),
                                     registry,
                                 )
                                 .await;
@@ -609,6 +617,18 @@ impl ResourceShutdownOperations for OperationGuardArc<VolumeSpec> {
         }
         result
     }
+}
+
+fn filter_targets(registered_target: Vec<String>, nexus: Nexus) -> Result<bool, SvcError> {
+    let path = nexus.device_uri.to_string();
+    let parsed_uri = path
+        .parse::<Uri>()
+        .map_err(|_| SvcError::InvalidArguments {})?;
+    let host = parsed_uri
+        .host()
+        .ok_or(SvcError::InvalidArguments {})?
+        .to_string();
+    Ok(registered_target.contains(&host))
 }
 
 impl OperationGuardArc<VolumeSpec> {

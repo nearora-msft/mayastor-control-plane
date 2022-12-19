@@ -231,6 +231,8 @@ pub enum SvcError {
     NvmeParseError {},
     #[snafu(display("Nvme connect failed : {}", details))]
     NvmeConnectError { details: String },
+    #[snafu(display("No Subsystems found for {}", nvme_path))]
+    NoSubsystemFound { nvme_path: String },
 }
 
 impl SvcError {
@@ -646,6 +648,12 @@ impl From<SvcError> for ReplyError {
                 extra: error.full_string(),
             },
             SvcError::SubsystemNotFound { .. } => ReplyError {
+                kind: ReplyErrorKind::NotFound,
+                resource: ResourceKind::Unknown,
+                source: desc.to_string(),
+                extra: error.full_string(),
+            },
+            SvcError::NoSubsystemFound { .. } => ReplyError {
                 kind: ReplyErrorKind::NotFound,
                 resource: ResourceKind::Unknown,
                 source: desc.to_string(),

@@ -321,6 +321,11 @@ message ProbeResponse {
 message DestroyShutdownTargetRequest {
   // uuid of the volume
   google.protobuf.StringValue volume_id = 1;
+  optional RegisteredTargets registered_targets = 2;
+}
+
+message RegisteredTargets{
+  repeated string target_list = 1;
 }
 
 // Reply type for a DestroyShutdownTargetRequest request
