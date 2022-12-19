@@ -619,6 +619,7 @@ impl ResourceShutdownOperations for OperationGuardArc<VolumeSpec> {
     }
 }
 
+/// Checks if Nexus is present in registered target list. Returns true if yes.
 fn filter_targets(registered_target: Vec<String>, nexus: Nexus) -> Result<bool, SvcError> {
     let path = nexus.device_uri.to_string();
     let parsed_uri = path

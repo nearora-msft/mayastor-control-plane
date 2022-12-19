@@ -24,10 +24,12 @@ message ReplacePathRequest {
   common.MapWrapper publish_context = 3;
 }
 
+// Get Controller request message.
 message GetNvmeControllerRequest{
   string nvme_path = 1;
 }
 
+// Get Controller response message.
 message GetNvmeControllerResponse{
   oneof reply {
     NvmeControllers nvme_controllers = 1;
@@ -35,6 +37,7 @@ message GetNvmeControllerResponse{
   }
 }
 
+// Message to represent target's address in the rpc response.
 message NvmeControllers{
   repeated string target_address = 1;
 }

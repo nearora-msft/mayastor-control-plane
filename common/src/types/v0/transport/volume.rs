@@ -606,6 +606,7 @@ impl From<&ReplicaTopology> for models::ReplicaTopology {
 pub struct DestroyShutdownTargets {
     /// The uuid of the owner, i.e the volume.
     uuid: VolumeId,
+    /// List of target address registered as Nvme Subsystems in the Frontend nodes.
     registered_targets: Option<Vec<String>>,
 }
 
@@ -617,9 +618,11 @@ impl DestroyShutdownTargets {
             registered_targets,
         }
     }
+    /// Get volumeId.
     pub fn uuid(&self) -> VolumeId {
         self.uuid.clone()
     }
+    /// Get registered_targets.
     pub fn registered_targets(&self) -> Option<Vec<String>> {
         self.registered_targets.clone()
     }

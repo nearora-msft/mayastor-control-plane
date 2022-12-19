@@ -198,6 +198,7 @@ impl SwitchOverRequest {
                 Err(anyhow!(error.to_string()))
             }
             Err(err) if err.kind == ReplyErrorKind::ResourceExhausted => {
+                // Cleanup volume targets that are not registered as Nvme Subsystems in the Node.
                 if self.new_path.is_some() {
                     if let Ok(uri) = Uri::builder()
                         .scheme("http")

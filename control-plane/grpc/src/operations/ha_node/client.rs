@@ -109,7 +109,12 @@ impl NodeAgentOperations for NodeAgentClient {
             Err(e) => Err(e.into()),
         }
     }
-
+    #[tracing::instrument(
+        name = "NodeAgentClient::get_nvme_controller",
+        level = "debug",
+        skip(self),
+        err
+    )]
     async fn get_nvme_controller(
         &self,
         request: &dyn GetControllerInfo,

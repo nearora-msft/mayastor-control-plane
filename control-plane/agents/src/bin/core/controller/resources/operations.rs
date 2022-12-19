@@ -139,6 +139,4 @@ pub(crate) trait ResourceShutdownOperations {
         registry: &Registry,
         request: &Self::RemoveShutdownTargets,
     ) -> Result<(), SvcError>;
-
-    // fn filter_tergets(reg_targets:Vec<String>, Vec<ResourceMutex<NexusSpec>>)
 }

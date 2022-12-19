@@ -84,40 +84,41 @@ impl ReportFailedPaths {
 }
 
 #[derive(Debug)]
+/// Request struct to get Nvme subsystems registered for a given nqn.
 pub struct GetController {
     nvme_path: String,
 }
 
 impl GetController {
+    /// Constructor to create instance of the struct. nvme_path is the device uri of the target
+    /// associated with volume.
     pub fn new(nvme_path: String) -> Self {
         Self { nvme_path }
     }
+    /// Get nvme path.
     pub fn nvme_path(&self) -> String {
         self.nvme_path.clone()
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Represents targets address of Nvme Subsystem.
 pub struct NvmeSubsystem {
     address: String,
 }
 
 impl NvmeSubsystem {
+    /// Creates an instance of this struct. address is the IP address of the Nvme Subsystem.
     pub fn new(target_addr: String) -> Self {
         Self {
             address: target_addr,
         }
     }
+    /// Get IP address of the Nvme Subsystem.
     pub fn address(&self) -> String {
         self.address.clone()
     }
 }
-
-// impl From<NvmeSubsystem> for String {
-//     fn from(subsys: NvmeSubsystem) -> Self {
-//         subsys.to_string()
-//     }
-// }
 
 #[derive(Debug)]
 pub struct ReplacePath {
